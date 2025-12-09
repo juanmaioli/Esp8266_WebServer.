@@ -188,8 +188,6 @@ void updateNetworkData() {
 
     }
 
-
-
     // Escanear redes WiFi
     wifiNetworksList = scanWifiNetworks();
     lastWifiScanTime = getFormattedTime();
@@ -200,18 +198,18 @@ void handleRoot() {
     // --- Formateo de datos de Cava para la web ---
     String formattedCavaData = cavaData;
 // Envolvemos los emojis comunes en un div con una clase para centrar y un span para hacerlos más grandes
-    formattedCavaData.replace("☀️", "<div class='emoji-container'><span class='emoji'>☀️</span></div>");
-    formattedCavaData.replace("🌙", "<div class='emoji-container'><span class='emoji'>🌙</span></div>");
-    formattedCavaData.replace("☁️", "<div class='emoji-container'><span class='emoji'>☁️</span></div>");
-    formattedCavaData.replace("⛅", "<div class='emoji-container'><span class='emoji'>⛅</span></div>");
-    formattedCavaData.replace("🌦️", "<div class='emoji-container'><span class='emoji'>🌦️</span></div>");
-    formattedCavaData.replace("🌧️", "<div class='emoji-container'><span class='emoji'>🌧️</span></div>");
-    formattedCavaData.replace("⛈️", "<div class='emoji-container'><span class='emoji'>⛈️</span></div>");
+    // formattedCavaData.replace("☀️", "<div class='emoji-container'><span class='emoji'>☀️</span></div>");
+    // formattedCavaData.replace("🌙", "<div class='emoji-container'><span class='emoji'>🌙</span></div>");
+    // formattedCavaData.replace("☁️", "<div class='emoji-container'><span class='emoji'>☁️</span></div>");
+    // formattedCavaData.replace("⛅", "<div class='emoji-container'><span class='emoji'>⛅</span></div>");
+    // formattedCavaData.replace("🌦️", "<div class='emoji-container'><span class='emoji'>🌦️</span></div>");
+    // formattedCavaData.replace("🌧️", "<div class='emoji-container'><span class='emoji'>🌧️</span></div>");
+    // formattedCavaData.replace("⛈️", "<div class='emoji-container'><span class='emoji'>⛈️</span></div>");
     // Typo corregido: formattedCava_data -> formattedCavaData
-    formattedCavaData.replace("❄️", "<div class='emoji-container'><span class='emoji'>❄️</span></div>");
-    formattedCavaData.replace("🌫️", "<div class='emoji-container'><span class='emoji'>🌫️</span></div>");
-    formattedCavaData.replace("🌨️", "<div class='emoji-container'><span class='emoji'>🌨️</span></div>");
-    formattedCavaData.replace("🌬️", "<div class='emoji-container'><span class='emoji'>🌬️</span></div>");
+    // formattedCavaData.replace("❄️", "<div class='emoji-container'><span class='emoji'>❄️</span></div>");
+    // formattedCavaData.replace("🌫️", "<div class='emoji-container'><span class='emoji'>🌫️</span></div>");
+    // formattedCavaData.replace("🌨️", "<div class='emoji-container'><span class='emoji'>🌨️</span></div>");
+    // formattedCavaData.replace("🌬️", "<div class='emoji-container'><span class='emoji'>🌬️</span></div>");
 // --- Construcción de la página HTML ---
     String page = "<!DOCTYPE html><html lang='es'><head>";
     page += "<meta charset='UTF-8'>";
