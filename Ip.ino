@@ -105,12 +105,24 @@ String scanWifiNetworks() {
 String getFormattedTime() {
   time_t now = time(nullptr);
   if (now < 8 * 3600 * 2) {
-    return "Hora no sincronizada";
+    return "No sincronizada";
   }
   struct tm timeinfo;
   localtime_r(&now, &timeinfo);
   char buffer[80];
-  strftime(buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
+  strftime(buffer, sizeof(buffer), "%H:%M:%S", &timeinfo);
+  return String(buffer);
+}
+
+String getFormattedDate() {
+  time_t now = time(nullptr);
+  if (now < 8 * 3600 * 2) {
+    return "Fecha no sincronizada";
+  }
+  struct tm timeinfo;
+  localtime_r(&now, &timeinfo);
+  char buffer[80];
+  strftime(buffer, sizeof(buffer), "%Y/%m/%d", &timeinfo);
   return String(buffer);
 }
 
@@ -231,6 +243,7 @@ void handleRoot() {
     page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
     page += "</style></head><body><div class='container'>";
     page += "<h1>Estado del Dispositivo</h1>";
+    page += "<p><strong>Fecha:</strong> " + getFormattedDate() + "</p>";
     page += "<p><strong>Hora:</strong> " + getFormattedTime() + "</p>";
     page += "<p><strong>IP Privada:</strong> " + localIP + "</p>";
     page += "<p><strong>M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "</p>";
