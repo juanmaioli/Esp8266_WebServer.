@@ -233,6 +233,8 @@ void handleRoot() {
     page += "<h1>Estado del Dispositivo</h1>";
     page += "<p><strong>Hora:</strong> " + getFormattedTime() + "</p>";
     page += "<p><strong>IP Privada:</strong> " + localIP + "</p>";
+    page += "<p><strong>M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "</p>";
+    page += "<p><strong>Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "</p>";
     page += "<p><strong>IP P&uacute;blica:</strong> " + publicIP + "</p>";
     page += "<hr><h2>Datos de Clima</h2><p>" + formattedCavaData + "</p>";
     page += "<hr><h2>Redes WiFi Cercanas</h2><p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p><hr>" + wifiNetworksList;
