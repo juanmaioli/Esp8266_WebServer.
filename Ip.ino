@@ -229,7 +229,7 @@ void handleRoot() {
     page += "strong { color: var(--text-primary); }";
     page += "hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }";
     page += ".carousel-container { position: relative; flex-grow: 1; overflow: hidden; }";
-    page += ".carousel-slide { display: none; height: 100%; overflow-y: auto; padding-right: 15px; box-sizing: border-box; }"; // Added overflow-y: auto
+    page += ".carousel-slide { display: none; height: 100%; overflow-y: auto; padding-right: 15px; box-sizing: border-box; word-wrap: break-word; }"; // Added overflow-y: auto and word-wrap
     page += ".fade { animation-name: fade; animation-duration: 0.5s; }";
     page += "@keyframes fade { from {opacity: .4} to {opacity: 1} }";
     page += ".prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; z-index: 10; }";
