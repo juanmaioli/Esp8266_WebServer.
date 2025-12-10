@@ -258,7 +258,7 @@ void handleRoot() {
     
     // --- Slide 1: Estado del Dispositivo ---
     page += "<div class='carousel-slide fade'>";
-    page += "<h1>Estado del Dispositivo</h1>";
+    page += "<h2>Estado del Dispositivo</h2>";
     page += "<p><strong>Fecha:</strong> " + getFormattedDate() + "</p>";
     page += "<p><strong>Hora:</strong> " + getFormattedTime() + "</p>";
     page += "<p><strong>IP Privada:</strong> " + localIP + "</p>";
