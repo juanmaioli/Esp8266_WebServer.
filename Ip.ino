@@ -92,7 +92,7 @@ String scanWifiNetworks() {
       list += " dBm)";
       list += "</p>";
       if (i < n - 1) {
-        list += "<hr>";
+        list += "";
       }
     }
 
@@ -209,19 +209,6 @@ void updateNetworkData() {
 void handleRoot() {
     // --- Formateo de datos de Cava para la web ---
     String formattedCavaData = cavaData;
-// Envolvemos los emojis comunes en un div con una clase para centrar y un span para hacerlos más grandes
-    // formattedCavaData.replace("☀️", "<div class='emoji-container'><span class='emoji'>☀️</span></div>");
-    // formattedCavaData.replace("🌙", "<div class='emoji-container'><span class='emoji'>🌙</span></div>");
-    // formattedCavaData.replace("☁️", "<div class='emoji-container'><span class='emoji'>☁️</span></div>");
-    // formattedCavaData.replace("⛅", "<div class='emoji-container'><span class='emoji'>⛅</span></div>");
-    // formattedCavaData.replace("🌦️", "<div class='emoji-container'><span class='emoji'>🌦️</span></div>");
-    // formattedCavaData.replace("🌧️", "<div class='emoji-container'><span class='emoji'>🌧️</span></div>");
-    // formattedCavaData.replace("⛈️", "<div class='emoji-container'><span class='emoji'>⛈️</span></div>");
-    // Typo corregido: formattedCava_data -> formattedCavaData
-    // formattedCavaData.replace("❄️", "<div class='emoji-container'><span class='emoji'>❄️</span></div>");
-    // formattedCavaData.replace("🌫️", "<div class='emoji-container'><span class='emoji'>🌫️</span></div>");
-    // formattedCavaData.replace("🌨️", "<div class='emoji-container'><span class='emoji'>🌨️</span></div>");
-    // formattedCavaData.replace("🌬️", "<div class='emoji-container'><span class='emoji'>🌬️</span></div>");
 // --- Construcción de la página HTML ---
     String page = "<!DOCTYPE html><html lang='es'><head>";
     page += "<meta charset='UTF-8'>";
@@ -249,7 +236,6 @@ void handleRoot() {
     page += "<p><strong>M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "</p>";
     page += "<p><strong>Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "</p>";
     page += "<p><strong>IP P&uacute;blica:</strong> " + publicIP + "</p>";
-    page += "<hr>";
     page += "<p><strong>Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm</p>";
     page += "<p><strong>Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "</p>";
     page += "<p><strong>Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap()) + " bytes</p>";
