@@ -239,6 +239,8 @@ void handleRoot() {
     page += ".dots { text-align: center; padding-top: 20px; }";
     page += ".dot { cursor: pointer; height: 15px; width: 15px; margin: 0 2px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }";
     page += ".active, .dot:hover { background-color: var(--dot-active-color); }";
+    page += ".emoji-container { text-align: center; margin-top: 15px; margin-bottom: 15px; }";
+    page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
     page += "@media (max-width: 768px) {"; // Mobile view
     page += ".container { max-width: 80%; height: 80vh; }";
     page += ".prev, .next { top: auto; bottom: 5px; transform: translateY(0); }";
@@ -272,7 +274,7 @@ void handleRoot() {
     // --- Slide 2: Datos de Clima ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Datos de Clima</h2>";
-    page += "<p>" + formattedCavaData + "</p>";
+    page += "<div class='emoji-container'><p class='emoji'>" + formattedCavaData + "</p></div>";
     page += "</div>";
 
     // --- Slide 3: Redes WiFi Cercanas ---
