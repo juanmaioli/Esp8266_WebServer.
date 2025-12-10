@@ -212,23 +212,36 @@ void handleRoot() {
 // --- Construcción de la página HTML ---
     String page = "<!DOCTYPE html><html lang='es'><head>";
     page += "<meta charset='UTF-8'>";
-    page += "<meta http-equiv='refresh' content='60'>";
     page += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
     page += "<title>Estado del Dispositivo</title>";
     page += "<style>";
-    page += ":root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; }";
+    page += ":root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; --dot-color: #bbb; --dot-active-color: #717171; }";
     page += "@media (prefers-color-scheme: dark) {";
-    page += ":root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; }";
+    page += ":root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; }";
     page += "}";
     page += "body { background-color: var(--bg-color); color: var(--text-secondary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem 0;}";
-    page += ".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; max-width: 90%; min-width: 320px; }";
-    page += "h1 { color: var(--text-primary); margin-bottom: 1.5rem; }";
+    page += ".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; max-width: 90%; min-width: 320px; position: relative; }";
+    page += "h1, h2 { color: var(--text-primary); margin-bottom: 1.5rem; }";
     page += "p { color: var(--text-secondary); font-size: 1.1rem; margin: 0.5rem 0; }";
     page += "strong { color: var(--text-primary); }";
     page += "hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }";
-    // page += "pre { background-color: var(--pre-bg); color: var(--text-secondary); padding: 1rem; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', Courier, monospace; line-height: 1.6; text-align: left; }";
-    page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
+    page += ".carousel-container { position: relative; }";
+    page += ".carousel-slide { display: none; }";
+    page += ".fade { animation-name: fade; animation-duration: 0.5s; }";
+    page += "@keyframes fade { from {opacity: .4} to {opacity: 1} }";
+    page += ".prev, .next { cursor: pointer; position: absolute; top: 50%; width: auto; margin-top: -22px; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 18px; transition: 0.3s; border-radius: 0 3px 3px 0; user-select: none; }";
+    page += ".next { right: 0; border-radius: 3px 0 0 3px; }";
+    page += ".prev:hover, .next:hover { background-color: rgba(0,0,0,0.2); }";
+    page += ".dots { text-align: center; padding-top: 20px; }";
+    page += ".dot { cursor: pointer; height: 15px; width: 15px; margin: 0 2px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }";
+    page += ".active, .dot:hover { background-color: var(--dot-active-color); }";
     page += "</style></head><body><div class='container'>";
+    
+    // --- Carousel ---
+    page += "<div class='carousel-container'>";
+    
+    // --- Slide 1: Estado del Dispositivo ---
+    page += "<div class='carousel-slide fade'>";
     page += "<h1>Estado del Dispositivo</h1>";
     page += "<p><strong>Fecha:</strong> " + getFormattedDate() + "</p>";
     page += "<p><strong>Hora:</strong> " + getFormattedTime() + "</p>";
@@ -240,9 +253,56 @@ void handleRoot() {
     page += "<p><strong>Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "</p>";
     page += "<p><strong>Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap()) + " bytes</p>";
     page += "<p><strong>Tiempo de Actividad:</strong> " + String(millis() / 1000) + " seg</p>";
-    page += "<hr><h2>Datos de Clima</h2><p>" + formattedCavaData + "</p>";
-    page += "<hr><h2>Redes WiFi Cercanas</h2><p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p><hr>" + wifiNetworksList;
-    page += "</div></body></html>";
+    page += "</div>";
+
+    // --- Slide 2: Datos de Clima ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Datos de Clima</h2>";
+    page += "<p>" + formattedCavaData + "</p>";
+    page += "</div>";
+
+    // --- Slide 3: Redes WiFi Cercanas ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Redes WiFi Cercanas</h2>";
+    page += "<p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p><hr>";
+    page += wifiNetworksList;
+    page += "</div>";
+
+    // --- Navigation Buttons ---
+    page += "<a class='prev' onclick='changeSlide(-1)'>&#10094;</a>";
+    page += "<a class='next' onclick='changeSlide(1)'>&#10095;</a>";
+    
+    page += "</div>"; // end carousel-container
+
+    // --- Dots ---
+    page += "<div class='dots'>";
+    page += "<span class='dot' onclick='currentSlide(1)'></span>";
+    page += "<span class='dot' onclick='currentSlide(2)'></span>";
+    page += "<span class='dot' onclick='currentSlide(3)'></span>";
+    page += "</div>";
+
+    page += "</div>"; // end container
+
+    // --- JavaScript ---
+    page += "<script>";
+    page += "let slideIndex = 1;";
+    page += "showSlide(slideIndex);";
+    page += "function changeSlide(n) { showSlide(slideIndex += n); }";
+    page += "function currentSlide(n) { showSlide(slideIndex = n); }";
+    page += "function showSlide(n) {";
+    page += "let i; let slides = document.getElementsByClassName('carousel-slide');";
+    page += "let dots = document.getElementsByClassName('dot');";
+    page += "if (n > slides.length) { slideIndex = 1; }";
+    page += "if (n < 1) { slideIndex = slides.length; }";
+    page += "for (i = 0; i < slides.length; i++) { slides[i].style.display = 'none'; }";
+    page += "for (i = 0; i < dots.length; i++) { dots[i].className = dots[i].className.replace(' active', ''); }";
+    page += "slides[slideIndex - 1].style.display = 'block';";
+    page += "dots[slideIndex - 1].className += ' active';";
+    page += "}";
+    page += "setInterval(function() { changeSlide(1); }, 30000);"; // Auto-rotate every 30 seconds
+    page += "</script>";
+    
+    page += "</body></html>";
 
     server.send(200, "text/html", page);
 }
