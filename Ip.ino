@@ -232,14 +232,25 @@ void handleRoot() {
     page += ".carousel-slide { display: none; height: 100%; overflow-y: auto; padding-right: 15px; box-sizing: border-box; }"; // Added overflow-y: auto
     page += ".fade { animation-name: fade; animation-duration: 0.5s; }";
     page += "@keyframes fade { from {opacity: .4} to {opacity: 1} }";
-    page += ".prev, .next { cursor: pointer; position: absolute; top: 50%; width: auto; margin-top: -22px; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 18px; transition: 0.3s; border-radius: 0 3px 3px 0; user-select: none; }";
-    page += ".next { right: 0; border-radius: 3px 0 0 3px; }";
-    page += ".prev:hover, .next:hover { background-color: rgba(0,0,0,0.2); }";
+    page += ".prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; z-index: 10; }";
+    page += ".prev { left: -50px; }";
+    page += ".next { right: -50px; }";
+    page += ".prev:hover, .next:hover { background-color: rgba(0,0,0,0.2); border-radius: 50%; }";
     page += ".dots { text-align: center; padding-top: 20px; }";
     page += ".dot { cursor: pointer; height: 15px; width: 15px; margin: 0 2px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }";
     page += ".active, .dot:hover { background-color: var(--dot-active-color); }";
+    page += "@media (max-width: 768px) {"; // Mobile view
+    page += ".container { max-width: 80%; height: 80vh; }";
+    page += ".prev, .next { top: auto; bottom: 5px; transform: translateY(0); }";
+    page += ".prev { left: 10px; }";
+    page += ".next { right: 10px; }";
+    page += "}";
     page += "</style></head><body><div class='container'>";
     
+    // --- Navigation Buttons ---
+    page += "<a class='prev' onclick='changeSlide(-1)'>&#10094;</a>";
+    page += "<a class='next' onclick='changeSlide(1)'>&#10095;</a>";
+
     // --- Carousel ---
     page += "<div class='carousel-container'>";
     
@@ -271,10 +282,6 @@ void handleRoot() {
     page += wifiNetworksList;
     page += "</div>";
 
-    // --- Navigation Buttons ---
-    page += "<a class='prev' onclick='changeSlide(-1)'>&#10094;</a>";
-    page += "<a class='next' onclick='changeSlide(1)'>&#10095;</a>";
-    
     page += "</div>"; // end carousel-container
 
     // --- Dots ---
