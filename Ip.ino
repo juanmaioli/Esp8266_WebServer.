@@ -229,7 +229,7 @@ void handleRoot() {
     page += "strong { color: var(--text-primary); }";
     page += "hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }";
     page += ".carousel-container { position: relative; flex-grow: 1; overflow: hidden; }";
-    page += ".carousel-slide { display: none; height: 100%; width: 100%; flex-shrink: 0; overflow-y: auto; padding-right: 15px; box-sizing: border-box; word-wrap: break-word; }";
+    page += ".carousel-slide { display: none; height: 100%; width: 100%; flex-basis: 100%; flex-shrink: 0; overflow-y: auto; padding-right: 15px; box-sizing: border-box; word-wrap: break-word; }";
     page += ".fade { animation-name: fade; animation-duration: 0.5s; }";
     page += "@keyframes fade { from {opacity: .4} to {opacity: 1} }";
     page += ".prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; z-index: 10; }";
@@ -273,8 +273,8 @@ void handleRoot() {
 
     // --- Slide 2: Datos de Clima ---
     page += "<div class='carousel-slide fade'>";
-    page += "<h2>Datos de Clima</h2>";
-    page += "<div class='emoji-container'><p class='emoji'>" + formattedCavaData + "</p></div>";
+    page += "<h2>Datos del Clima</h2>";
+    page += "<div><p>" + formattedCavaData + "</p></div>";
     page += "</div>";
 
     // --- Slide 3: Redes WiFi Cercanas ---
