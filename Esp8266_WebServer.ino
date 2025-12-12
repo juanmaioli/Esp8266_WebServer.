@@ -209,6 +209,20 @@ void updateNetworkData() {
 void handleRoot() {
     // --- Formateo de datos de Cava para la web ---
     String formattedCavaData = cavaData;
+
+    // Calculo para Tiempo de Actividad
+    unsigned long totalSeconds = millis() / 1000;
+    unsigned long days = totalSeconds / 86400;
+    unsigned long hours = (totalSeconds % 86400) / 3600;
+    unsigned long minutes = ((totalSeconds % 86400) % 3600) / 60;
+    unsigned long seconds = ((totalSeconds % 86400) % 3600) % 60;
+    String uptime = "";
+    if (days > 0) uptime += String(days) + "d ";
+    if (hours > 0 || days > 0) uptime += String(hours) + "h ";
+    if (minutes > 0 || hours > 0 || days > 0) uptime += String(minutes) + "m ";
+    uptime += String(seconds) + "s";
+    if (uptime == "") uptime = "0s"; // In case millis() is very small
+
 // --- Construcción de la página HTML ---
     String page = "<!DOCTYPE html><html lang='es'><head>";
     page += "<meta charset='UTF-8'>";
@@ -267,8 +281,10 @@ void handleRoot() {
     page += "<p><strong>IP P&uacute;blica:</strong> " + publicIP + "</p>";
     page += "<p><strong>Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm</p>";
     page += "<p><strong>Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "</p>";
-    page += "<p><strong>Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap()) + " bytes</p>";
-    page += "<p><strong>Tiempo de Actividad:</strong> " + String(millis() / 1000) + " seg</p>";
+    page += "<p><strong>ID del Chip (HEX):</strong> " + String(ESP.getChipId(), HEX) + "</p>";
+    page += "<p><strong>Memoria Flash:</strong> " + String(ESP.getFlashChipSize() / 1024) + " KB</p>";
+    page += "<p><strong>Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap() / 1024.0, 2) + " KB</p>";
+    page += "<p><strong>Tiempo de Actividad:</strong> " + uptime + "</p>";
     page += "</div>";
 
     // --- Slide 2: Datos de Clima ---
