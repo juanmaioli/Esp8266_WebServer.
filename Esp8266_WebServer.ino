@@ -330,19 +330,20 @@ void handleRoot() {
     // --- Slide 1: Estado del Dispositivo ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Estado del Dispositivo</h2>";
-    page += "<h3><strong>📅 Fecha:</strong> " + getFormattedDate() + "</h3>";
-    page += "<h3><strong>⌚ Hora:</strong> " + getFormattedTime() + "</h3>";
-    page += "<h3><strong>🖥️ Hostname:</strong> " + id_Wemos + "</h3>";
-    page += "<h3><strong>🏠 IP Privada:</strong> " + localIP + "</h3>";
-    page += "<h3><strong>↔️ M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "</h3>";
-    page += "<h3><strong>🚪 Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "</h3>";
-    page += "<h3><strong>🌐 IP P&uacute;blica:</strong> " + publicIP + "</h3>";
-    page += "<h3><strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm</h3>";
-    page += "<h3><strong>🆔 Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "</h3>";
-    page += "<h3><strong>💡 ID del Chip (HEX):</strong> " + String(ESP.getChipId(), HEX) + "</h3>";
-    page += "<h3><strong>💾 Memoria Flash:</strong> " + String(ESP.getFlashChipSize() / 1024) + " KB</h3>";
-    page += "<h3><strong>🧠 Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap() / 1024.0, 2) + " KB</h3>";
-    page += "<h3><strong>⚡ Tiempo de Actividad:</strong> " + uptime + "</h3>";
+    page += "<div class='emoji-container'><span class='emoji'>📟</span></div><br>";
+    page += "<h3><strong>📅 Fecha:</strong> " + getFormattedDate() + "<br>";
+    page += "<strong>⌚ Hora:</strong> " + getFormattedTime() + "<br>";
+    page += "<strong>🖥️ Hostname:</strong> " + id_Wemos + "<br>";
+    page += "<strong>🏠 IP Privada:</strong> " + localIP + "<br>";
+    page += "<strong>↔️ M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "<br>";
+    page += "<strong>🚪 Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "<br>";
+    page += "<strong>🌐 IP P&uacute;blica:</strong> " + publicIP + "<br>";
+    page += "<strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm<br>";
+    page += "<strong>🆔 Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "<br>";
+    page += "<strong>💡 ID del Chip (HEX):</strong> " + String(ESP.getChipId(), HEX) + "<br>";
+    page += "<strong>💾 Memoria Flash:</strong> " + String(ESP.getFlashChipSize() / 1024) + " KB<br>";
+    page += "<strong>🧠 Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap() / 1024.0, 2) + " KB<br>";
+    page += "<strong>⚡ Tiempo de Actividad:</strong> " + uptime + "</h3>";
     page += "</div>";
 
     // --- Slide 2: Datos de Clima ---
@@ -355,12 +356,14 @@ void handleRoot() {
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Redes WiFi Cercanas</h2>";
     page += "<p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p><hr>";
+    page += "<div class='emoji-container'><span class='emoji'>📡</span></div><br>";
     page += wifiNetworksList;
     page += "</div>";
 
     // --- Slide 4: Prueba de Velocidad ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Prueba de Velocidad</h2>";
+    page += "<div class='emoji-container'><span class='emoji'>🚀</span></div><br>";
     page += "<p><strong>&Uacute;ltima prueba:</strong> " + lastSpeedTestTime + "</p>";
     page += "<p><strong>Velocidad de Descarga:</strong> " + downloadSpeed + "</p>";
     page += "<div class='center-button'>";
