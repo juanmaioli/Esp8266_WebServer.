@@ -310,7 +310,7 @@ void handleRoot() {
     page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
     page += ".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; }";
     page += ".button:hover { background-color: #45a049; }";
-    page += ".button[disabled] { background-color: #cccccc; cursor: not-allowed; }";
+    page += ".button[disabled] { background-color: #cccccc; color: #555555; border: 1px solid #eeeeee; cursor: not-allowed; }";
     page += ".center-button { text-align: center; }";
     page += "@media (max-width: 768px) {"; // Mobile view
     page += ".container { max-width: 80%; height: 80vh; }";
@@ -389,7 +389,7 @@ void handleRoot() {
     page += "function currentSlide(n) { showSlide(slideIndex = n); }";
     page += "function showWaiting() {";
     page += "  document.getElementById('speedtest-button').setAttribute('disabled', 'true');";
-    page += "  document.getElementById('speedtest-button').innerHTML = 'Midiendo...';";
+    page += "  document.getElementById('speedtest-button').innerHTML = '⏳ Midiendo...';";
     page += "  document.getElementById('waiting-message').style.display = 'block';";
     page += "}";
     page += "function showSlide(n) {";
