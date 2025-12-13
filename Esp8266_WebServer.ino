@@ -287,9 +287,9 @@ void handleRoot() {
     page += ":root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; }";
     page += "}";
     page += "body { background-color: var(--bg-color); color: var(--text-secondary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem 0;}";
-    page += ".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; max-width: 40%; height: 80vh; position: relative; display: flex; flex-direction: column; }"; // PC view
+    page += ".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; width: 400px; height: 80vh; position: relative; display: flex; flex-direction: column; }"; // PC view
     page += "@media (max-width: 768px) {"; // Mobile view
-    page += ".container { max-width: 80%; height: 80vh; }";
+    page += ".container { max-width: 80%; width: auto; height: 80vh; }"; // On mobile, adjust width to auto and keep max-width 80%
     page += "}";
     page += "h1, h2 { color: var(--text-primary); margin-bottom: 1.5rem; }";
     page += "p { color: var(--text-secondary); font-size: 1.1rem; margin: 0.5rem 0; }";
