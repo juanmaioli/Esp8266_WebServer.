@@ -126,7 +126,7 @@ String getFormattedDate() {
   struct tm timeinfo;
   localtime_r(&now, &timeinfo);
   char buffer[80];
-  strftime(buffer, sizeof(buffer), "%Y/%m/%d", &timeinfo);
+  strftime(buffer, sizeof(buffer), "%Y-%m-%d", &timeinfo);
   return String(buffer);
 }
 
