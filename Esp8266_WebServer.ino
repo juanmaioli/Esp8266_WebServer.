@@ -17,6 +17,7 @@ struct WifiNetwork {
 
 // --- Variables Globales ---
 const char *host = "ifconfig.me";
+const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
 String localIP;
@@ -329,18 +330,19 @@ void handleRoot() {
     // --- Slide 1: Estado del Dispositivo ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Estado del Dispositivo</h2>";
-    page += "<p><strong>Fecha:</strong> " + getFormattedDate() + "</p>";
-    page += "<p><strong>Hora:</strong> " + getFormattedTime() + "</p>";
-    page += "<p><strong>IP Privada:</strong> " + localIP + "</p>";
-    page += "<p><strong>M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "</p>";
-    page += "<p><strong>Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "</p>";
-    page += "<p><strong>IP P&uacute;blica:</strong> " + publicIP + "</p>";
-    page += "<p><strong>Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm</p>";
-    page += "<p><strong>Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "</p>";
-    page += "<p><strong>ID del Chip (HEX):</strong> " + String(ESP.getChipId(), HEX) + "</p>";
-    page += "<p><strong>Memoria Flash:</strong> " + String(ESP.getFlashChipSize() / 1024) + " KB</p>";
-    page += "<p><strong>Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap() / 1024.0, 2) + " KB</p>";
-    page += "<p><strong>Tiempo de Actividad:</strong> " + uptime + "</p>";
+    page += "<h3><strong>📅 Fecha:</strong> " + getFormattedDate() + "</h3>";
+    page += "<h3><strong>⌚ Hora:</strong> " + getFormattedTime() + "</h3>";
+    page += "<h3><strong>🖥️ Hostname:</strong> " + id_Wemos + "</h3>";
+    page += "<h3><strong>🏠 IP Privada:</strong> " + localIP + "</h3>";
+    page += "<h3><strong>↔️ M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "</h3>";
+    page += "<h3><strong>🚪 Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "</h3>";
+    page += "<h3><strong>🌐 IP P&uacute;blica:</strong> " + publicIP + "</h3>";
+    page += "<h3><strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm</h3>";
+    page += "<h3><strong>🆔 Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "</h3>";
+    page += "<h3><strong>💡 ID del Chip (HEX):</strong> " + String(ESP.getChipId(), HEX) + "</h3>";
+    page += "<h3><strong>💾 Memoria Flash:</strong> " + String(ESP.getFlashChipSize() / 1024) + " KB</h3>";
+    page += "<h3><strong>🧠 Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap() / 1024.0, 2) + " KB</h3>";
+    page += "<h3><strong>⚡ Tiempo de Actividad:</strong> " + uptime + "</h3>";
     page += "</div>";
 
     // --- Slide 2: Datos de Clima ---
@@ -413,7 +415,7 @@ void setup() {
     delay(1500);
     Serial.begin(115200);
     serial_number = WiFi.softAPmacAddress();
-    id_Wemos = "WiFiSensor-" + leftRepCadena(serial_number);
+    id_Wemos = String(hostname_prefix) + leftRepCadena(serial_number);
     WiFi.hostname(id_Wemos);
 
     WiFiManager wifiManager;
