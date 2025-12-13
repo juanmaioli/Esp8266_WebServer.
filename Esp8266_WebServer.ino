@@ -27,6 +27,10 @@ String wifiNetworksList = "Escaneando...";
 // Variable para la lista de redes WiFi
 String lastWifiScanTime = "Nunca";
 // Variable para la hora de la última actualización de WiFi 
+String downloadSpeed = "No medido";
+// Variable para la velocidad de descarga
+String lastSpeedTestTime = "Nunca";
+// Variable para la hora de la última prueba de velocidad
 
 // --- Configuración del Servidor Web ---
 ESP8266WebServer server(3000);
@@ -155,6 +159,48 @@ void getPublicIP() {
   }
 }
 
+void testDownloadSpeed() {
+  Serial.println("\n--- Iniciando prueba de velocidad de descarga ---");
+  HTTPClient http;
+  WiFiClient client;
+
+  const char* testUrl = "http://ipv4.download.thinkbroadband.com/5MB.zip";
+  const float fileSizeMB = 5.0;
+
+  if (http.begin(client, testUrl)) {
+    http.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+    unsigned long startTime = millis();
+    int httpCode = http.GET();
+    if (httpCode > 0 && httpCode == HTTP_CODE_OK) {
+      // Leer el cuerpo de la respuesta para asegurarse de que se descargue
+      int len = http.getSize();
+      uint8_t buff[128] = { 0 };
+      while (http.connected() && (len > 0 || len == -1)) {
+        size_t size = client.readBytes(buff, sizeof(buff));
+        if (size == 0) {
+          break;
+        }
+        if (len > 0) {
+          len -= size;
+        }
+      }
+      unsigned long endTime = millis();
+      float duration = (endTime - startTime) / 1000.0;
+      float speedMbps = (fileSizeMB * 8) / duration;
+      downloadSpeed = String(speedMbps, 2) + " Mbps";
+      lastSpeedTestTime = getFormattedTime();
+      Serial.println("Prueba de velocidad completada: " + downloadSpeed);
+    } else {
+      downloadSpeed = "Error en la prueba. Codigo: " + String(httpCode);
+      Serial.println(downloadSpeed);
+    }
+    http.end();
+  } else {
+    downloadSpeed = "Fallo la conexión para la prueba de velocidad.";
+    Serial.println(downloadSpeed);
+  }
+}
+
 void updateNetworkData() {
   // Limpiar el monitor serial y mover el cursor al inicio
   Serial.print("\033[2J\033[H");
@@ -203,6 +249,12 @@ void updateNetworkData() {
     // Escanear redes WiFi
     wifiNetworksList = scanWifiNetworks();
     lastWifiScanTime = getFormattedTime();
+}
+
+void handleSpeedTest() {
+  testDownloadSpeed();
+  server.sendHeader("Location", String("/"), true);
+  server.send(302, "text/plain", "");
 }
 
 // --- Handler para el Servidor Web ---
@@ -255,6 +307,10 @@ void handleRoot() {
     page += ".active, .dot:hover { background-color: var(--dot-active-color); }";
     page += ".emoji-container { text-align: center; margin-top: 15px; margin-bottom: 15px; }";
     page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
+    page += ".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; }";
+    page += ".button:hover { background-color: #45a049; }";
+    page += ".button[disabled] { background-color: #cccccc; cursor: not-allowed; }";
+    page += ".center-button { text-align: center; }";
     page += "@media (max-width: 768px) {"; // Mobile view
     page += ".container { max-width: 80%; height: 80vh; }";
     page += ".prev, .next { top: auto; bottom: 5px; transform: translateY(0); }";
@@ -300,6 +356,17 @@ void handleRoot() {
     page += wifiNetworksList;
     page += "</div>";
 
+    // --- Slide 4: Prueba de Velocidad ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Prueba de Velocidad</h2>";
+    page += "<p><strong>&Uacute;ltima prueba:</strong> " + lastSpeedTestTime + "</p>";
+    page += "<p><strong>Velocidad de Descarga:</strong> " + downloadSpeed + "</p>";
+    page += "<div class='center-button'>";
+    page += "<a href='/speedtest' id='speedtest-button' class='button' onclick='showWaiting()'>&#x1F680; Iniciar Prueba</a>";
+    page += "</div>";
+    page += "<p id='waiting-message' style='display:none; text-align:center;'>Por favor, espere mientras se realiza la prueba...</p>";
+    page += "</div>";
+
     page += "</div>"; // end carousel-container
 
     // --- Dots ---
@@ -307,6 +374,7 @@ void handleRoot() {
     page += "<span class='dot' onclick='currentSlide(1)'></span>";
     page += "<span class='dot' onclick='currentSlide(2)'></span>";
     page += "<span class='dot' onclick='currentSlide(3)'></span>";
+    page += "<span class='dot' onclick='currentSlide(4)'></span>";
     page += "</div>";
 
     page += "</div>"; // end container
@@ -317,6 +385,11 @@ void handleRoot() {
     page += "showSlide(slideIndex);";
     page += "function changeSlide(n) { showSlide(slideIndex += n); }";
     page += "function currentSlide(n) { showSlide(slideIndex = n); }";
+    page += "function showWaiting() {";
+    page += "  document.getElementById('speedtest-button').setAttribute('disabled', 'true');";
+    page += "  document.getElementById('speedtest-button').innerHTML = 'Midiendo...';";
+    page += "  document.getElementById('waiting-message').style.display = 'block';";
+    page += "}";
     page += "function showSlide(n) {";
     page += "let i; let slides = document.getElementsByClassName('carousel-slide');";
     page += "let dots = document.getElementsByClassName('dot');";
@@ -372,6 +445,7 @@ void setup() {
     previousTimeUpdate = currentMillis;
 
     server.on("/", handleRoot);
+    server.on("/speedtest", handleSpeedTest);
     server.begin();
     Serial.println("Servidor Web iniciado.");
     Serial.print("Para ver el estado, visita: http://");
