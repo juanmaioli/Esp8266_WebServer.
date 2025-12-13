@@ -291,7 +291,7 @@ void handleRoot() {
     page += "@media (max-width: 768px) {"; // Mobile view
     page += ".container { max-width: 80%; width: auto; height: 80vh; }"; // On mobile, adjust width to auto and keep max-width 80%
     page += "}";
-    page += "h1, h2 { color: var(--text-primary); margin-bottom: 1.5rem; }";
+    page += "h1, h2 { color: var(--text-primary); margin-bottom: 1rem; text-align: center; }";
     page += "p { color: var(--text-secondary); font-size: 1.1rem; margin: 0.5rem 0; }";
     page += "strong { color: var(--text-primary); }";
     page += "hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }";
@@ -355,8 +355,8 @@ void handleRoot() {
     // --- Slide 3: Redes WiFi Cercanas ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Redes WiFi Cercanas</h2>";
-    page += "<p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p><hr>";
     page += "<div class='emoji-container'><span class='emoji'>📡</span></div><br>";
+    page += "<p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p>";
     page += wifiNetworksList;
     page += "</div>";
 
