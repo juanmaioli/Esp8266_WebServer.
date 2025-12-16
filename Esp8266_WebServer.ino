@@ -70,9 +70,9 @@ void sortNetworks(WifiNetwork *networks, int count) {
 }
 
 String scanWifiNetworks() {
-  Serial.println("Iniciando escaneo de redes WiFi...");
+  // Serial.println("Iniciando escaneo de redes WiFi...");
   int n = WiFi.scanNetworks();
-  Serial.println("Escaneo completo.");
+  // Serial.println("Escaneo completo.");
 
   if (n == 0) {
     return "<p>No se encontraron redes.</p>";
@@ -132,11 +132,11 @@ String getFormattedDate() {
 }
 
 void configModeCallback(WiFiManager *myWiFiManager) {
-  Serial.println("Modo Configuración Activado");
-  Serial.print("Conéctate a la red: ");
-  Serial.println(myWiFiManager->getConfigPortalSSID());
-  Serial.print("IP del portal: ");
-  Serial.println(WiFi.softAPIP());
+  // Serial.println("Modo Configuración Activado");
+  // Serial.print("Conéctate a la red: ");
+  // Serial.println(myWiFiManager->getConfigPortalSSID());
+  // Serial.print("IP del portal: ");
+  // Serial.println(WiFi.softAPIP());
 }
 
 void getPublicIP() {
@@ -144,7 +144,7 @@ void getPublicIP() {
   client.setInsecure();
 
   if (!client.connect(host, 443)) {
-    Serial.println(getFormattedTime() + " - Fallo de conexión con ifconfig.me");
+    // Serial.println(getFormattedTime() + " - Fallo de conexión con ifconfig.me");
     return;
   }
 
@@ -156,12 +156,12 @@ void getPublicIP() {
       publicIP = newPublicIP;
     }
   } else {
-    Serial.println(getFormattedTime() + " - Error al obtener la IP pública.");
+    // Serial.println(getFormattedTime() + " - Error al obtener la IP pública.");
   }
 }
 
 void testDownloadSpeed() {
-  Serial.println("\n--- Iniciando prueba de velocidad de descarga ---");
+  // Serial.println("\n--- Iniciando prueba de velocidad de descarga ---");
   HTTPClient http;
   WiFiClient client;
 
@@ -190,34 +190,34 @@ void testDownloadSpeed() {
       float speedMbps = (fileSizeMB * 8) / duration;
       downloadSpeed = String(speedMbps, 2) + " Mbps";
       lastSpeedTestTime = getFormattedTime();
-      Serial.println("Prueba de velocidad completada: " + downloadSpeed);
+      // Serial.println("Prueba de velocidad completada: " + downloadSpeed);
     } else {
       downloadSpeed = "Error en la prueba. Codigo: " + String(httpCode);
-      Serial.println(downloadSpeed);
+      // Serial.println(downloadSpeed);
     }
     http.end();
   } else {
     downloadSpeed = "Fallo la conexión para la prueba de velocidad.";
-    Serial.println(downloadSpeed);
+    // Serial.println(downloadSpeed);
   }
 }
 
 void updateNetworkData() {
   // Limpiar el monitor serial y mover el cursor al inicio
-  Serial.print("\033[2J\033[H");
-  Serial.println("--- Chequeo de Redes (cada 29 mins) ---");
+  // Serial.print("\033[2J\033[H");
+  // Serial.println("--- Chequeo de Redes (cada 29 mins) ---");
 
   // Chequear y mostrar IP Local
   localIP = WiFi.localIP().toString();
-  Serial.println(getFormattedTime() + " - IP Local: " + localIP);
+  // Serial.println(getFormattedTime() + " - IP Local: " + localIP);
 
   // Chequear y mostrar IP Pública
   getPublicIP();
-  Serial.println(getFormattedTime() + " - IP Publica: " + publicIP);
+  // Serial.println(getFormattedTime() + " - IP Publica: " + publicIP);
 
     // Obtener y mostrar datos de Cava
 
-    Serial.println("\n--- Obteniendo datos de Cava ---");
+    // Serial.println("\n--- Obteniendo datos de Cava ---");
     HTTPClient http;
 
     WiFiClient client; // Cliente para HTTP normal
@@ -229,12 +229,12 @@ void updateNetworkData() {
 
         cavaData = http.getString();
 
-        Serial.println(cavaData);
+        // Serial.println(cavaData);
 
       } else {
 
         cavaData = "Error al obtener datos de Cava. Codigo: " + String(httpCode);
-        Serial.println(cavaData);
+        // Serial.println(cavaData);
 
       }
 
@@ -243,7 +243,7 @@ void updateNetworkData() {
     } else {
 
       cavaData = "Fallo la conexión con el servidor de Cava.";
-      Serial.println(cavaData);
+      // Serial.println(cavaData);
 
     }
 
@@ -256,6 +256,10 @@ void handleSpeedTest() {
   testDownloadSpeed();
   server.sendHeader("Location", String("/"), true);
   server.send(302, "text/plain", "");
+}
+
+void handleTimeRequest() {
+  server.send(200, "text/plain", getFormattedTime());
 }
 
 // --- Handler para el Servidor Web ---
@@ -280,6 +284,7 @@ void handleRoot() {
     String page = "<!DOCTYPE html><html lang='es'><head>";
     page += "<meta charset='UTF-8'>";
     page += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+    page += "<meta http-equiv='refresh' content='1200'>"; // Auto-refresh
     page += "<title>Estado del Dispositivo</title>";
     page += "<style>";
     page += ":root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; --dot-color: #bbb; --dot-active-color: #717171; }";
@@ -312,8 +317,8 @@ void handleRoot() {
     page += ".button:hover { background-color: #45a049; }";
     page += ".button[disabled] { background-color: #cccccc; color: #555555; border: 1px solid #eeeeee; cursor: not-allowed; }";
     page += ".center-button { text-align: center; }";
-    page += "@media (max-width: 768px) {"; // Mobile view
-    page += ".container { max-width: 80%; height: 80vh; }";
+    page += "@media (max-width: 768px) {";
+    page += ".container { max-width: 80%; width: auto; height: 80vh; }";
     page += ".prev, .next { top: auto; bottom: 5px; transform: translateY(0); }";
     page += ".prev { left: 10px; }";
     page += ".next { right: 10px; }";
@@ -332,7 +337,7 @@ void handleRoot() {
     page += "<h2>Estado del Dispositivo</h2>";
     page += "<div class='emoji-container'><span class='emoji'>📟</span></div><br>";
     page += "<h3><strong>📅 Fecha:</strong> " + getFormattedDate() + "<br>";
-    page += "<strong>⌚ Hora:</strong> " + getFormattedTime() + "<br>";
+    page += "<strong>⌚ Hora:</strong> <span id='current-time'>" + getFormattedTime() + "</span><br>";
     page += "<strong>🖥️ Hostname:</strong> " + id_Wemos + "<br>";
     page += "<strong>🏠 IP Privada:</strong> " + localIP + "<br>";
     page += "<strong>↔️ M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "<br>";
@@ -406,6 +411,7 @@ void handleRoot() {
     page += "dots[slideIndex - 1].className += ' active';";
     page += "}";
     page += "setInterval(function() { changeSlide(1); }, 30000);"; // Auto-rotate every 30 seconds
+    page += "function updateTime() { fetch('/time').then(response => response.text()).then(data => { if (data) document.getElementById('current-time').innerText = data; }); } setInterval(updateTime, 900000);";
     page += "</script>";
     
     page += "</body></html>";
@@ -425,23 +431,23 @@ void setup() {
     wifiManager.setAPCallback(configModeCallback);
     wifiManager.setWiFiAutoReconnect(true);
 
-    Serial.println("\nConectando a la red WiFi...");
+    // Serial.println("\nConectando a la red WiFi...");
     if (!wifiManager.autoConnect(id_Wemos.c_str())) {
-      Serial.println("No se pudo conectar. Reiniciando...");
+      // Serial.println("No se pudo conectar. Reiniciando...");
       ESP.reset();
       delay(1000);
     }
-    Serial.println("\n¡Conexión exitosa!");
+    // Serial.println("\n¡Conexión exitosa!");
 
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    Serial.print("Sincronizando hora...");
+    // Serial.print("Sincronizando hora...");
     time_t now = time(nullptr);
     while (now < 8 * 3600 * 2) {
       delay(500);
-      Serial.print(".");
+      // Serial.print(".");
       now = time(nullptr);
     }
-    Serial.println("\n¡Hora sincronizada!");
+    // Serial.println("\n¡Hora sincronizada!");
 
     // Forzar la primera actualización de datos de red al iniciar
     updateNetworkData();
@@ -451,8 +457,9 @@ void setup() {
 
     server.on("/", handleRoot);
     server.on("/speedtest", handleSpeedTest);
+    server.on("/time", handleTimeRequest);
     server.begin();
-    Serial.println("Servidor Web iniciado.");
+    // Serial.println("Servidor Web iniciado.");
     Serial.print("Para ver el estado, visita: http://");
     Serial.print(WiFi.localIP());
     Serial.println(":3000");
@@ -463,9 +470,9 @@ void loop() {
     // Tarea 1: Imprimir la hora en el Serial cada minuto
     if (currentMillis - previousTimeUpdate >= timeInterval) {
       previousTimeUpdate = currentMillis;
-      Serial.print("\033[2J\033[H");
-      Serial.print("Hora: ");
-      Serial.println(getFormattedTime());
+      // Serial.print("\033[2J\033[H");
+      // Serial.print("Hora: ");
+      // Serial.println(getFormattedTime());
     }
 
     // Tarea 2: Actualizar todos los datos de red cada 29 minutos 

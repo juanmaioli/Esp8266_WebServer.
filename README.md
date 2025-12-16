@@ -4,18 +4,19 @@ Este proyecto transforma un microcontrolador ESP8266 en un completo monitor de s
 
 ## ✨ Características Principales
 
--   **Portal Cautivo (WiFiManager):** Permite una configuración de red WiFi sencilla la primera vez que se usa, sin necesidad de escribir las credenciales en el código. El dispositivo crea su propio punto de acceso para que puedas conectarte y configurar la red local.
--   **Servidor Web Avanzado:** La interfaz web se sirve en el puerto `3000`, es responsiva (se adapta a PC y móviles) y tiene soporte para tema claro/oscuro según la preferencia de tu sistema.
--   **Monitor de Dispositivo:** Muestra información vital en tiempo real:
-    -   Fecha y Hora (sincronizada por NTP para Argentina, GMT-3).
-    -   IP Privada, Máscara de Red y Puerta de Enlace.
-    -   IP Pública.
-    -   Intensidad de la señal WiFi (RSSI).
-    -   Dirección MAC.
-    -   Memoria libre y tiempo de actividad del dispositivo.
--   **Datos Externos:** Obtiene y muestra datos de temperatura y clima desde el servicio de `pikapp.com.ar`.
--   **Escáner WiFi:** Detecta y lista las redes WiFi circundantes, ordenándolas por potencia de señal y mostrando si son abiertas o seguras.
--   **Actualizaciones Automáticas:** Los datos de red y clima se refrescan cada 29 minutos para mantener la información actualizada.
+-   **Portal Cautivo (WiFiManager):** Configuración de red WiFi sencilla la primera vez, sin credenciales en el código. El ESP8266 crea un AP para que te conectes y configures la red local.
+-   **Servidor Web Avanzado:** Interfaz web en el puerto `3000`, responsiva (PC/móvil) y con soporte para tema claro/oscuro automático.
+-   **Monitor de Dispositivo Completo:**
+    -   **Red:** IP Privada/Pública, Máscara, Gateway, RSSI y MAC.
+    -   **Hardware:** ID del Chip, memoria flash, memoria libre y tiempo de actividad.
+    -   **Hora:** Fecha y Hora sincronizadas por NTP (Argentina, GMT-3).
+-   **Datos Externos:** Obtiene y muestra datos de clima desde el servicio de `pikapp.com.ar`.
+-   **Escáner WiFi:** Detecta, ordena por potencia y muestra las redes WiFi cercanas, indicando si son abiertas o seguras.
+-   **Prueba de Velocidad:** Mide la velocidad de descarga de la conexión a internet directamente desde el dispositivo.
+-   **Actualizaciones Dinámicas y Automáticas:**
+    -   **Hora dinámica:** La hora se actualiza cada 15 minutos sin recargar la página.
+    -   **Refresco de página:** La página web completa se recarga cada 20 minutos.
+    -   **Actualización de datos:** Los datos de red (IP pública, escaneo WiFi) y clima se actualizan en segundo plano cada 29 minutos.
 
 ## 📋 Requisitos
 
