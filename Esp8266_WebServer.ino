@@ -1,14 +1,26 @@
-// CavaWiFi Version 1.6
+// CavaWiFi Version 2.2
 // Author Juan Maioli
-// Añadida la obtención de datos de Cava cada 29 minutos.
+// Cambios: Ping cada 45s y Host de Latencia Configurable.
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h> // Para el servidor web
 #include <ESP8266HTTPClient.h> // Para peticiones HTTP
 #include <WiFiClientSecure.h>
 #include <WiFiManager.h>      // https://github.com/tzapu/WiFiManager
 #include <time.h>             // Para la sincronización de hora (NTP)
+#include <EEPROM.h>           // Para guardar configuración
+#include "ESP8266Ping.h"      // Librería Local de Ping
 
-// Definición de la estructura movida a la parte superior
+// --- Estructura de Configuración ---
+struct ConfigSettings {
+  char description[51]; // Max 50 chars + null terminator
+  char domain[51];      // Max 50 chars + null terminator
+  char pingTarget[51];  // Max 50 chars + null terminator (NUEVO)
+  uint8_t magic;        // Byte para verificar versión de config
+};
+
+ConfigSettings settings;
+
+// --- Estructura WiFi ---
 struct WifiNetwork {
   String ssid;
   int32_t rssi;
@@ -16,14 +28,12 @@ struct WifiNetwork {
 };
 
 // --- Variables Globales ---
-const char *host = "ifconfig.me";
 const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
 String localIP;
 String publicIP = "Obteniendo..."; // Valor inicial
-String cavaData = "Cargando...";
-// Variable para los datos de Cava
+
 String wifiNetworksList = "Escaneando...";
 // Variable para la lista de redes WiFi
 String lastWifiScanTime = "Nunca";
@@ -32,6 +42,21 @@ String downloadSpeed = "No medido";
 // Variable para la velocidad de descarga
 String lastSpeedTestTime = "Nunca";
 // Variable para la hora de la última prueba de velocidad
+String lanScanData = "<p>No se ha realizado el escaneo.</p>";
+String lastLanScanTime = "Nunca";
+
+// --- Variables Monitor de Latencia ---
+String latencyData = "Calculando...";
+String latencyStatus = "🟡 Iniciando...";
+int lastLatency = 0;
+int lastPacketLoss = 0;
+String lastPingTimeStr = "Nunca";
+
+// --- Variables Gráfico RSSI ---
+const int HISTORY_LEN = 60; // 60 minutos
+int rssiHistory[HISTORY_LEN];
+String rssiGraphSvg = "";
+
 
 // --- Configuración del Servidor Web ---
 ESP8266WebServer server(3000);
@@ -45,12 +70,34 @@ const int daylightOffset_sec = 0;
 // --- Configuración de Temporizadores (millis) ---
 unsigned long previousTimeUpdate = 0;
 unsigned long previousIpUpdate = 0;
-const long timeInterval = 60000;      // 1 minuto (en milisegundos)
-const long ipInterval = 1740000;
-// 29 minutos (en milisegundos)
+unsigned long previousPingUpdate = 0; // Para el monitor de latencia
+unsigned long previousRssiUpdate = 0; // Para el historial RSSI
+const long timeInterval = 60000;      // 1 minuto
+const long ipInterval = 1740000;      // 29 minutos
+const long pingInterval = 45000;      // 45 segundos (Latencia) - CAMBIO SOLICITADO
+const long rssiInterval = 60000;      // 1 minuto (Histórico RSSI)
 
 
-// --- Funciones ---
+// --- Funciones de Persistencia ---
+void saveSettings() {
+  EEPROM.put(0, settings);
+  EEPROM.commit();
+}
+
+void loadSettings() {
+  EEPROM.begin(512);
+  EEPROM.get(0, settings);
+  // Verificar si es la primera vez o si cambió la estructura (Magic 0x43)
+  if (settings.magic != 0x43) {
+    strncpy(settings.description, "Casa", 50);
+    strncpy(settings.domain, "ifconfig.me", 50);
+    strncpy(settings.pingTarget, "8.8.8.8", 50); // Default Google DNS
+    settings.magic = 0x43; // Marcar como inicializado v2.2
+    saveSettings();
+  }
+}
+
+// --- Funciones Auxiliares ---
 String leftRepCadena(String mac) {
   mac.replace(":", "");
   mac = mac.substring(mac.length() - 4);
@@ -142,9 +189,12 @@ void configModeCallback(WiFiManager *myWiFiManager) {
 void getPublicIP() {
   WiFiClientSecure client;
   client.setInsecure();
+  
+  // Usar el dominio configurado en settings
+  const char* host = settings.domain;
 
   if (!client.connect(host, 443)) {
-    // Serial.println(getFormattedTime() + " - Fallo de conexión con ifconfig.me");
+    // Serial.println(getFormattedTime() + " - Fallo de conexión con " + String(host));
     return;
   }
 
@@ -202,6 +252,82 @@ void testDownloadSpeed() {
   }
 }
 
+void updateLatencyData() {
+    Serial.println("--- Monitor de Latencia ---");
+    
+    // Usar el host configurado por el usuario
+    const char* remote_host = settings.pingTarget;
+    int pings_to_send = 5;
+    
+    // Timeout normal de 1000ms para Internet
+    bool result = Ping.ping(remote_host, pings_to_send, 1000); 
+    
+    int avg_time = Ping.averageTime();
+    int lost = pings_to_send - Ping.packetsRecv();
+    int loss_percent = (lost * 100) / pings_to_send;
+
+    lastLatency = avg_time;
+    lastPacketLoss = loss_percent;
+    lastPingTimeStr = getFormattedTime();
+
+    if (loss_percent == 100) {
+        latencyStatus = "🔴 Sin Conexión";
+    } else if (loss_percent > 0) {
+        latencyStatus = "🟡 Inestable (" + String(loss_percent) + "% Loss)";
+    } else if (avg_time > 150) {
+        latencyStatus = "🟡 Lento (" + String(avg_time) + "ms)";
+    } else {
+        latencyStatus = "🟢 Estable";
+    }
+
+    latencyData = "<p><strong>Estado:</strong> " + latencyStatus + "</p>";
+    latencyData += "<p><strong>Latencia Media:</strong> " + String(avg_time) + " ms</p>";
+    latencyData += "<p><strong>Pérdida Paquetes:</strong> " + String(loss_percent) + "%</p>";
+    
+    Serial.printf("Ping a %s: %d ms avg, %d%% loss\n", remote_host, avg_time, loss_percent);
+}
+
+void updateRssiHistory() {
+  int currentRssi = WiFi.RSSI();
+  
+  // Desplazar valores (Shift)
+  for (int i = 0; i < HISTORY_LEN - 1; i++) {
+    rssiHistory[i] = rssiHistory[i+1];
+  }
+  rssiHistory[HISTORY_LEN - 1] = currentRssi;
+
+  // Generar SVG String
+  // ViewBox 0 0 60 100.
+  // X: 0 a 59 (índice)
+  // Y: -30dBm (Mejor) -> 0px, -100dBm (Peor) -> 100px
+  
+  String points = "";
+  for (int i = 0; i < HISTORY_LEN; i++) {
+    int y = map(rssiHistory[i], -30, -100, 0, 100); // Invertido: señal fuerte (arriba), débil (abajo)
+    // Constrain para que no se salga del gráfico
+    if(y < 0) y = 0;
+    if(y > 100) y = 100;
+    
+    points += String(i) + "," + String(y) + " ";
+  }
+
+  // Color dinámico según la señal actual
+  String strokeColor = "#4CAF50"; // Verde
+  if (currentRssi < -70) strokeColor = "#FFC107"; // Amarillo
+  if (currentRssi < -85) strokeColor = "#F44336"; // Rojo
+
+  rssiGraphSvg = "<svg viewBox='0 0 " + String(HISTORY_LEN - 1) + " 100' width='100%' height='150' xmlns='http://www.w3.org/2000/svg'>";
+  // Fondo rejilla simple
+  rssiGraphSvg += "<rect width='100%' height='100%' fill='none' stroke='#ddd' stroke-width='1'/>";
+  rssiGraphSvg += "<line x1='0' y1='25' x2='100%' y2='25' stroke='#eee' stroke-dasharray='2'/>";
+  rssiGraphSvg += "<line x1='0' y1='50' x2='100%' y2='50' stroke='#eee' stroke-dasharray='2'/>";
+  rssiGraphSvg += "<line x1='0' y1='75' x2='100%' y2='75' stroke='#eee' stroke-dasharray='2'/>";
+  
+  // El Gráfico
+  rssiGraphSvg += "<polyline points='" + points + "' fill='none' stroke='" + strokeColor + "' stroke-width='2' vector-effect='non-scaling-stroke'/>";
+  rssiGraphSvg += "</svg>";
+}
+
 void updateNetworkData() {
   // Limpiar el monitor serial y mover el cursor al inicio
   // Serial.print("\033[2J\033[H");
@@ -215,38 +341,6 @@ void updateNetworkData() {
   getPublicIP();
   // Serial.println(getFormattedTime() + " - IP Publica: " + publicIP);
 
-    // Obtener y mostrar datos de Cava
-
-    // Serial.println("\n--- Obteniendo datos de Cava ---");
-    HTTPClient http;
-
-    WiFiClient client; // Cliente para HTTP normal
-
-    if (http.begin(client, "http://pikapp.com.ar/cava/txt/")) {
-
-      int httpCode = http.GET();
-      if (httpCode > 0 && httpCode == HTTP_CODE_OK) {
-
-        cavaData = http.getString();
-
-        // Serial.println(cavaData);
-
-      } else {
-
-        cavaData = "Error al obtener datos de Cava. Codigo: " + String(httpCode);
-        // Serial.println(cavaData);
-
-      }
-
-      http.end();
-
-    } else {
-
-      cavaData = "Fallo la conexión con el servidor de Cava.";
-      // Serial.println(cavaData);
-
-    }
-
     // Escanear redes WiFi
     wifiNetworksList = scanWifiNetworks();
     lastWifiScanTime = getFormattedTime();
@@ -258,14 +352,84 @@ void handleSpeedTest() {
   server.send(302, "text/plain", "");
 }
 
+void handleLanScan() {
+  IPAddress local = WiFi.localIP();
+  String result = "";
+  int found = 0;
+
+  Serial.println("\n--- Iniciando Escaneo LAN ---");
+
+  // Asumimos máscara /24 (255.255.255.0) - escaneamos de .1 a .254
+  for (int i = 1; i < 255; i++) {
+    IPAddress target(local[0], local[1], local[2], i);
+    
+    // Saltamos nuestra propia IP
+    if (target == local) continue;
+    
+    Serial.print("Escaneando: ");
+    Serial.print(target);
+
+    // Ping ICMP simple con 1 intento y TIMEOUT CORTO (50ms)
+    if (Ping.ping(target, 1, 50)) {
+      Serial.println(" -> [ONLINE]");
+      result += "<p>🟢 " + target.toString() + "</p>";
+      found++;
+    } else {
+      Serial.println(" -> .");
+    }
+    yield(); // Evitar Watchdog Reset
+  }
+
+  Serial.println("--- Escaneo Finalizado ---");
+
+  if (found == 0) {
+    result = "<p>No se encontraron otros dispositivos activos (que respondan ping).</p>";
+  }
+
+  lanScanData = result;
+  lastLanScanTime = getFormattedTime();
+
+  server.sendHeader("Location", String("/"), true);
+  server.send(302, "text/plain", "");
+}
+
 void handleTimeRequest() {
   server.send(200, "text/plain", getFormattedTime());
 }
 
+void handleSaveConfig() {
+  if (server.hasArg("desc")) {
+    String d = server.arg("desc");
+    d.trim();
+    strncpy(settings.description, d.c_str(), 50);
+    settings.description[50] = '\0'; // Asegurar terminación null
+  }
+  
+  if (server.hasArg("domain")) {
+    String dom = server.arg("domain");
+    dom.trim();
+    if (dom.length() > 0) {
+      strncpy(settings.domain, dom.c_str(), 50);
+      settings.domain[50] = '\0';
+    }
+  }
+
+  if (server.hasArg("pingIP")) {
+    String pip = server.arg("pingIP");
+    pip.trim();
+    if (pip.length() > 0) {
+      strncpy(settings.pingTarget, pip.c_str(), 50);
+      settings.pingTarget[50] = '\0';
+    }
+  }
+
+  saveSettings();
+  server.sendHeader("Location", String("/"), true);
+  server.send(302, "text/plain", "");
+}
+
 // --- Handler para el Servidor Web ---
 void handleRoot() {
-    // --- Formateo de datos de Cava para la web ---
-    String formattedCavaData = cavaData;
 
     // Calculo para Tiempo de Actividad
     unsigned long totalSeconds = millis() / 1000;
@@ -285,11 +449,12 @@ void handleRoot() {
     page += "<meta charset='UTF-8'>";
     page += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
     page += "<meta http-equiv='refresh' content='1200'>"; // Auto-refresh
+    page += "<link rel='icon' href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📟</text></svg>'>";
     page += "<title>Estado del Dispositivo</title>";
     page += "<style>";
-    page += ":root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; --dot-color: #bbb; --dot-active-color: #717171; }";
+    page += ":root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; --dot-color: #bbb; --dot-active-color: #717171; --input-bg: #fff; --input-border: #ccc; }";
     page += "@media (prefers-color-scheme: dark) {";
-    page += ":root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; }";
+    page += ":root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; --input-bg: #333; --input-border: #555; }";
     page += "}";
     page += "body { background-color: var(--bg-color); color: var(--text-secondary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem 0;}";
     page += ".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; width: 400px; height: 80vh; position: relative; display: flex; flex-direction: column; }"; // PC view
@@ -313,10 +478,11 @@ void handleRoot() {
     page += ".active, .dot:hover { background-color: var(--dot-active-color); }";
     page += ".emoji-container { text-align: center; margin-top: 15px; margin-bottom: 15px; }";
     page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
-    page += ".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; }";
+    page += ".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; border: none;}";
     page += ".button:hover { background-color: #45a049; }";
     page += ".button[disabled] { background-color: #555; color: #eee; border: 1px solid #eeeeee; cursor: not-allowed; }";
     page += ".center-button { text-align: center; }";
+    page += "input[type=text] { width: 100%; padding: 12px 20px; margin: 8px 0; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: 4px; background-color: var(--input-bg); color: var(--text-primary); }";
     page += "@media (max-width: 768px) {";
     page += ".container { max-width: 80%; width: auto; height: 80vh; }";
     page += ".prev, .next { top: auto; bottom: 5px; transform: translateY(0); }";
@@ -334,7 +500,7 @@ void handleRoot() {
     
     // --- Slide 1: Estado del Dispositivo ---
     page += "<div class='carousel-slide fade'>";
-    page += "<h2>Estado del Dispositivo</h2>";
+    page += "<h2>Estado - " + String(settings.description) + "</h2>";
     page += "<div class='emoji-container'><span class='emoji'>📟</span></div><br>";
     page += "<h3><strong>📅 Fecha:</strong> " + getFormattedDate() + "<br>";
     page += "<strong>⌚ Hora:</strong> <span id='current-time'>" + getFormattedTime() + "</span><br>";
@@ -351,13 +517,7 @@ void handleRoot() {
     page += "<strong>⚡ Tiempo de Actividad:</strong> " + uptime + "</h3>";
     page += "</div>";
 
-    // --- Slide 2: Datos de Clima ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Datos del Clima</h2>";
-    page += "<div><p>" + formattedCavaData + "</p></div>";
-    page += "</div>";
-
-    // --- Slide 3: Redes WiFi Cercanas ---
+    // --- Slide 2: Redes WiFi Cercanas ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Redes WiFi Cercanas</h2>";
     page += "<div class='emoji-container'><span class='emoji'>📡</span></div><br>";
@@ -365,16 +525,64 @@ void handleRoot() {
     page += wifiNetworksList;
     page += "</div>";
 
-    // --- Slide 4: Prueba de Velocidad ---
+    // --- Slide 3: Prueba de Velocidad ---
     page += "<div class='carousel-slide fade'>";
     page += "<h2>Prueba de Velocidad</h2>";
     page += "<div class='emoji-container'><span class='emoji'>🚀</span></div><br>";
     page += "<p><strong>&Uacute;ltima prueba:</strong> " + lastSpeedTestTime + "</p>";
     page += "<p><strong>Velocidad de Descarga:</strong> " + downloadSpeed + "</p>";
     page += "<div class='center-button'>";
-    page += "<a href='/speedtest' id='speedtest-button' class='button' onclick='showWaiting()'>&#x1F680; Iniciar Prueba</a>";
+    page += "<a href='/speedtest' id='speedtest-button' class='button' onclick='showWaiting(\"speedtest-button\", \"waiting-message\")'>&#x1F680; Iniciar Prueba</a>";
     page += "</div>";
     page += "<p id='waiting-message' style='display:none; text-align:center;'>Por favor, espere mientras se realiza la prueba...</p>";
+    page += "</div>";
+
+    // --- Slide 4: Monitor de Latencia ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Monitor de Latencia</h2>";
+    page += "<div class='emoji-container'><span class='emoji'>⏱️</span></div><br>";
+    page += "<p><strong>&Uacute;ltimo chequeo:</strong> " + lastPingTimeStr + "</p>";
+    page += latencyData;
+    page += "<p><i>Ping a " + String(settings.pingTarget) + "</i></p>";
+    page += "</div>";
+
+    // --- Slide 5: Histórico RSSI ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Señal WiFi (1h)</h2>";
+    page += "<div class='emoji-container'><span class='emoji'>📉</span></div><br>";
+    page += "<p><strong>Actual:</strong> " + String(WiFi.RSSI()) + " dBm</p>";
+    page += "<div style='background:white; padding:10px; border-radius:5px; border:1px solid #ccc;'>" + rssiGraphSvg + "</div>";
+    page += "<div style='display:flex; justify-content:space-between; font-size:0.8em; margin-top:5px;'><span>-30dBm</span><span>-100dBm</span></div>";
+    page += "</div>";
+
+    // --- Slide 6: Escáner LAN ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Esc&aacute;ner LAN</h2>";
+    page += "<div class='emoji-container'><span class='emoji'>🕸️</span></div><br>";
+    page += "<p>Busca dispositivos en tu red utilizando <strong>Ping (ICMP)</strong>.</p>";
+    page += "<p><strong>&Uacute;ltimo escaneo:</strong> " + lastLanScanTime + "</p>";
+    page += "<div class='center-button'>";
+    page += "<a href='/scanlan' id='scanlan-button' class='button' onclick='showWaiting(\"scanlan-button\", \"waiting-lan\")'>&#x1F50E; Escanear Red</a>";
+    page += "</div>";
+    page += "<p id='waiting-lan' style='display:none; text-align:center;'>Escaneando... Esto puede tardar varios segundos.</p>";
+    page += "<div style='margin-top:15px;'>" + lanScanData + "</div>";
+    page += "</div>";
+
+    // --- Slide 7: Configuración ---
+    page += "<div class='carousel-slide fade'>";
+    page += "<h2>Configuraci&oacute;n</h2>";
+    page += "<div class='emoji-container'><span class='emoji'>⚙️</span></div><br>";
+    page += "<form action='/save' method='POST'>";
+    page += "<p><strong>Descripci&oacute;n del Dispositivo:</strong><br>";
+    page += "<input type='text' name='desc' value='" + String(settings.description) + "' maxlength='50' placeholder='Ej: Casa'></p>";
+    page += "<p><strong>Dominio IP P&uacute;blica:</strong><br>";
+    page += "<input type='text' name='domain' value='" + String(settings.domain) + "' maxlength='50' placeholder='Ej: ifconfig.me'></p>";
+    page += "<p><strong>Host Ping Latencia:</strong><br>";
+    page += "<input type='text' name='pingIP' value='" + String(settings.pingTarget) + "' maxlength='50' placeholder='Ej: 8.8.8.8'></p>";
+    page += "<div class='center-button'>";
+    page += "<button type='submit' class='button'>💾 Guardar Cambios</button>";
+    page += "</div>";
+    page += "</form>";
     page += "</div>";
 
     page += "</div>"; // end carousel-container
@@ -385,6 +593,9 @@ void handleRoot() {
     page += "<span class='dot' onclick='currentSlide(2)'></span>";
     page += "<span class='dot' onclick='currentSlide(3)'></span>";
     page += "<span class='dot' onclick='currentSlide(4)'></span>";
+    page += "<span class='dot' onclick='currentSlide(5)'></span>";
+    page += "<span class='dot' onclick='currentSlide(6)'></span>";
+    page += "<span class='dot' onclick='currentSlide(7)'></span>";
     page += "</div>";
 
     page += "</div>"; // end container
@@ -395,10 +606,10 @@ void handleRoot() {
     page += "showSlide(slideIndex);";
     page += "function changeSlide(n) { showSlide(slideIndex += n); }";
     page += "function currentSlide(n) { showSlide(slideIndex = n); }";
-    page += "function showWaiting() {";
-    page += "  document.getElementById('speedtest-button').setAttribute('disabled', 'true');";
-    page += "  document.getElementById('speedtest-button').innerHTML = '⏳ Midiendo...';";
-    page += "  document.getElementById('waiting-message').style.display = 'block';";
+    page += "function showWaiting(btnId, msgId) {";
+    page += "  document.getElementById(btnId).setAttribute('disabled', 'true');";
+    page += "  document.getElementById(btnId).innerHTML = '⏳ Trabajando...';";
+    page += "  document.getElementById(msgId).style.display = 'block';";
     page += "}";
     page += "function showSlide(n) {";
     page += "let i; let slides = document.getElementsByClassName('carousel-slide');";
@@ -423,6 +634,10 @@ void handleRoot() {
 void setup() {
     delay(1500);
     Serial.begin(115200);
+
+    // Cargar configuración persistente
+    loadSettings();
+
     serial_number = WiFi.softAPmacAddress();
     id_Wemos = String(hostname_prefix) + leftRepCadena(serial_number);
     WiFi.hostname(id_Wemos);
@@ -448,16 +663,26 @@ void setup() {
       now = time(nullptr);
     }
     // Serial.println("\n¡Hora sincronizada!");
+    
+    // Inicializar Array RSSI con el valor actual para no empezar en cero
+    int currentRssi = WiFi.RSSI();
+    for(int i=0; i<HISTORY_LEN; i++) rssiHistory[i] = currentRssi;
+    updateRssiHistory();
 
     // Forzar la primera actualización de datos de red al iniciar
     updateNetworkData();
+    updateLatencyData(); // Primera medición de latencia
     unsigned long currentMillis = millis();
     previousIpUpdate = currentMillis;
     previousTimeUpdate = currentMillis;
+    previousPingUpdate = currentMillis;
+    previousRssiUpdate = currentMillis;
 
     server.on("/", handleRoot);
     server.on("/speedtest", handleSpeedTest);
+    server.on("/scanlan", handleLanScan); // Endpoint para escáner LAN
     server.on("/time", handleTimeRequest);
+    server.on("/save", HTTP_POST, handleSaveConfig); // Nuevo endpoint para guardar config
     server.begin();
     // Serial.println("Servidor Web iniciado.");
     Serial.print("Para ver el estado, visita: http://");
@@ -480,7 +705,19 @@ void loop() {
       previousIpUpdate = currentMillis;
       updateNetworkData();
     }
+    
+    // Tarea 3: Monitor de Latencia (Cada 45 segundos)
+    if (currentMillis - previousPingUpdate >= pingInterval) {
+      previousPingUpdate = currentMillis;
+      updateLatencyData();
+    }
+    
+    // Tarea 4: Actualizar Historial RSSI (Cada 1 minuto)
+    if (currentMillis - previousRssiUpdate >= rssiInterval) {
+      previousRssiUpdate = currentMillis;
+      updateRssiHistory();
+    }
 
-    // Tarea 3: Atender las peticiones del cliente web
+    // Tarea 5: Atender las peticiones del cliente web
     server.handleClient();
 }
