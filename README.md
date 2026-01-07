@@ -1,12 +1,13 @@
-# 📟 Monitor de Infraestructura y Red con ESP8266 (v2.2)
+# 📟 Monitor de Infraestructura y Red con ESP8266 (v2.3)
 
-Este proyecto transforma un microcontrolador ESP8266 en una navaja suiza para el diagnóstico de redes. A través de un servidor web autónomo, permite monitorear la salud de tu conexión a internet, la estabilidad del WiFi y descubrir dispositivos en tu red local.
+Este proyecto transforma un microcontrolador ESP8266 en una navaja suiza para el diagnóstico de redes. A través de un servidor web autónomo y optimizado, permite monitorear la salud de tu conexión a internet, la estabilidad del WiFi y descubrir dispositivos en tu red local.
 
 ## ✨ Características Principales
 
 ### 1. 📊 Dashboard en Tiempo Real
-Interfaz web responsiva con carrusel automático (Slide Show) y modo oscuro automático.
+Interfaz web responsiva con carrusel manual y soporte nativo para modo oscuro.
 *   **Estado General:** Uptime, IPs (Privada/Pública), Memoria Libre, Info del Chip.
+*   **Optimización de Memoria:** Utiliza *Chunked Transfer Encoding* para servir la interfaz sin saturar la RAM del ESP8266.
 *   **Favicon Dinámico:** SVG incrustado (📟).
 
 ### 2. ⏱️ Monitor de Latencia (WAN)
@@ -17,7 +18,8 @@ Detecta micro-cortes y lentitud en tu conexión a Internet.
 
 ### 3. 📉 Gráfico Histórico de Señal WiFi
 Visualiza la calidad de tu conexión WiFi en la última hora.
-*   Gráfico **SVG generado en el dispositivo** (sin librerías JS externas).
+*   Gráfico **SVG generado en el dispositivo**.
+*   **Diseño Adaptativo:** Se escala correctamente al ancho del dispositivo y respeta el tema oscuro/claro del sistema.
 *   Código de colores semaforizado según la intensidad (dBm).
 
 ### 4. 🕸️ Escáner LAN (ICMP)
@@ -58,6 +60,7 @@ Guarda tus preferencias en la memoria EEPROM (no se borran al reiniciar):
 
 ## 🛠️ Historial de Versiones
 
+*   **v2.3:** Optimización crítica de memoria (Chunked response), corrección visual del gráfico WiFi (tamaño y tema oscuro), eliminación de retardos bloqueantes en arranque y cambio de carrusel a manual.
 *   **v2.2:** Host de latencia configurable, Ping cada 45s.
 *   **v2.1:** Eliminado módulo de Clima. Limpieza de código.
 *   **v2.0:** Añadido Gráfico SVG histórico de RSSI.

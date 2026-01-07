@@ -6,7 +6,7 @@
 #include <ESP8266HTTPClient.h> // Para peticiones HTTP
 #include <WiFiClientSecure.h>
 #include <WiFiManager.h>      // https://github.com/tzapu/WiFiManager
-#include <time.h>             // Para la sincronización de hora (NTP)
+#include <time.h>
 #include <EEPROM.h>           // Para guardar configuración
 #include "ESP8266Ping.h"      // Librería Local de Ping
 
@@ -75,7 +75,7 @@ unsigned long previousRssiUpdate = 0; // Para el historial RSSI
 const long timeInterval = 60000;      // 1 minuto
 const long ipInterval = 1740000;      // 29 minutos
 const long pingInterval = 45000;      // 45 segundos (Latencia) - CAMBIO SOLICITADO
-const long rssiInterval = 60000;      // 1 minuto (Histórico RSSI)
+const long rssiInterval = 60000;      // 1 minuto (Histórico RSSI) 
 
 
 // --- Funciones de Persistencia ---
@@ -316,12 +316,12 @@ void updateRssiHistory() {
   if (currentRssi < -70) strokeColor = "#FFC107"; // Amarillo
   if (currentRssi < -85) strokeColor = "#F44336"; // Rojo
 
-  rssiGraphSvg = "<svg viewBox='0 0 " + String(HISTORY_LEN - 1) + " 100' width='100%' height='150' xmlns='http://www.w3.org/2000/svg'>";
+  rssiGraphSvg = "<svg viewBox='0 0 " + String(HISTORY_LEN - 1) + " 100' width='100%' height='200' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'>";
   // Fondo rejilla simple
-  rssiGraphSvg += "<rect width='100%' height='100%' fill='none' stroke='#ddd' stroke-width='1'/>";
-  rssiGraphSvg += "<line x1='0' y1='25' x2='100%' y2='25' stroke='#eee' stroke-dasharray='2'/>";
-  rssiGraphSvg += "<line x1='0' y1='50' x2='100%' y2='50' stroke='#eee' stroke-dasharray='2'/>";
-  rssiGraphSvg += "<line x1='0' y1='75' x2='100%' y2='75' stroke='#eee' stroke-dasharray='2'/>";
+  rssiGraphSvg += "<rect width='100%' height='100%' fill='none' stroke='var(--chart-grid)' stroke-width='1'/>";
+  rssiGraphSvg += "<line x1='0' y1='25' x2='100%' y2='25' stroke='var(--chart-line-grid)' stroke-dasharray='2'/>";
+  rssiGraphSvg += "<line x1='0' y1='50' x2='100%' y2='50' stroke='var(--chart-line-grid)' stroke-dasharray='2'/>";
+  rssiGraphSvg += "<line x1='0' y1='75' x2='100%' y2='75' stroke='var(--chart-line-grid)' stroke-dasharray='2'/>";
   
   // El Gráfico
   rssiGraphSvg += "<polyline points='" + points + "' fill='none' stroke='" + strokeColor + "' stroke-width='2' vector-effect='non-scaling-stroke'/>";
@@ -444,195 +444,72 @@ void handleRoot() {
     uptime += String(seconds) + "s";
     if (uptime == "") uptime = "0s"; // In case millis() is very small
 
-// --- Construcción de la página HTML ---
-    String page = "<!DOCTYPE html><html lang='es'><head>";
-    page += "<meta charset='UTF-8'>";
-    page += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-    page += "<meta http-equiv='refresh' content='1200'>"; // Auto-refresh
-    page += "<link rel='icon' href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📟</text></svg>'>";
-    page += "<title>Estado del Dispositivo</title>";
-    page += "<style>";
-    page += ":root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; --dot-color: #bbb; --dot-active-color: #717171; --input-bg: #fff; --input-border: #ccc; }";
-    page += "@media (prefers-color-scheme: dark) {";
-    page += ":root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; --input-bg: #333; --input-border: #555; }";
-    page += "}";
-    page += "body { background-color: var(--bg-color); color: var(--text-secondary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem 0;}";
-    page += ".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; width: 400px; height: 80vh; position: relative; display: flex; flex-direction: column; }"; // PC view
-    page += "@media (max-width: 768px) {"; // Mobile view
-    page += ".container { max-width: 80%; width: auto; height: 80vh; }"; // On mobile, adjust width to auto and keep max-width 80%
-    page += "}";
-    page += "h1, h2 { color: var(--text-primary); margin-bottom: 1rem; text-align: center; }";
-    page += "p { color: var(--text-secondary); font-size: 1.1rem; margin: 0.5rem 0; }";
-    page += "strong { color: var(--text-primary); }";
-    page += "hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }";
-    page += ".carousel-container { position: relative; flex-grow: 1; overflow: hidden; }";
-    page += ".carousel-slide { display: none; height: 100%; width: 100%; flex-basis: 100%; flex-shrink: 0; overflow-y: auto; padding-right: 15px; box-sizing: border-box; word-wrap: break-word; }";
-    page += ".fade { animation-name: fade; animation-duration: 0.5s; }";
-    page += "@keyframes fade { from {opacity: .4} to {opacity: 1} }";
-    page += ".prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; z-index: 10; }";
-    page += ".prev { left: -50px; }";
-    page += ".next { right: -50px; }";
-    page += ".prev:hover, .next:hover { background-color: rgba(0,0,0,0.2); border-radius: 50%; }";
-    page += ".dots { text-align: center; padding-top: 20px; }";
-    page += ".dot { cursor: pointer; height: 15px; width: 15px; margin: 0 2px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }";
-    page += ".active, .dot:hover { background-color: var(--dot-active-color); }";
-    page += ".emoji-container { text-align: center; margin-top: 15px; margin-bottom: 15px; }";
-    page += ".emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }";
-    page += ".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; border: none;}";
-    page += ".button:hover { background-color: #45a049; }";
-    page += ".button[disabled] { background-color: #555; color: #eee; border: 1px solid #eeeeee; cursor: not-allowed; }";
-    page += ".center-button { text-align: center; }";
-    page += "input[type=text] { width: 100%; padding: 12px 20px; margin: 8px 0; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: 4px; background-color: var(--input-bg); color: var(--text-primary); }";
-    page += "@media (max-width: 768px) {";
-    page += ".container { max-width: 80%; width: auto; height: 80vh; }";
-    page += ".prev, .next { top: auto; bottom: 5px; transform: translateY(0); }";
-    page += ".prev { left: 10px; }";
-    page += ".next { right: 10px; }";
-    page += "}";
-    page += "</style></head><body><div class='container'>";
-    
-    // --- Navigation Buttons ---
-    page += "<a class='prev' onclick='changeSlide(-1)'>&#10094;</a>";
-    page += "<a class='next' onclick='changeSlide(1)'>&#10095;</a>";
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/html", "");
 
-    // --- Carousel ---
-    page += "<div class='carousel-container'>";
-    
-    // --- Slide 1: Estado del Dispositivo ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Estado - " + String(settings.description) + "</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>📟</span></div><br>";
-    page += "<h3><strong>📅 Fecha:</strong> " + getFormattedDate() + "<br>";
-    page += "<strong>⌚ Hora:</strong> <span id='current-time'>" + getFormattedTime() + "</span><br>";
-    page += "<strong>🖥️ Hostname:</strong> " + id_Wemos + "<br>";
-    page += "<strong>🏠 IP Privada:</strong> " + localIP + "<br>";
-    page += "<strong>↔️ M&aacute;scara de Red:</strong> " + WiFi.subnetMask().toString() + "<br>";
-    page += "<strong>🚪 Puerta de Enlace:</strong> " + WiFi.gatewayIP().toString() + "<br>";
-    page += "<strong>🌐 IP P&uacute;blica:</strong> " + publicIP + "<br>";
-    page += "<strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> " + String(WiFi.RSSI()) + " dBm<br>";
-    page += "<strong>🆔 Direcci&oacute;n MAC:</strong> " + WiFi.macAddress() + "<br>";
-    page += "<strong>💡 ID del Chip (HEX):</strong> " + String(ESP.getChipId(), HEX) + "<br>";
-    page += "<strong>💾 Memoria Flash:</strong> " + String(ESP.getFlashChipSize() / 1024) + " KB<br>";
-    page += "<strong>🧠 Memoria Libre (Heap):</strong> " + String(ESP.getFreeHeap() / 1024.0, 2) + " KB<br>";
-    page += "<strong>⚡ Tiempo de Actividad:</strong> " + uptime + "</h3>";
-    page += "</div>";
+    String chunk = F("<!DOCTYPE html><html lang='es'><head>");
+    chunk += F("<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+    chunk += F("<meta http-equiv='refresh' content='1200'>");
+    chunk += F("<link rel='icon' href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📟</text></svg>'>");
+    chunk += F("<title>Estado del Dispositivo</title>");
+    chunk += F("<style>:root { --bg-color: #f0f2f5; --container-bg: #ffffff; --text-primary: #1c1e21; --text-secondary: #4b4f56; --pre-bg: #f5f5f5; --hr-color: #e0e0e0; --dot-color: #bbb; --dot-active-color: #717171; --input-bg: #fff; --input-border: #ccc; --chart-bg: #ffffff; --chart-grid: #dddddd; --chart-line-grid: #eeeeee; --chart-border: #cccccc; } ");
+    chunk += F("@media (prefers-color-scheme: dark) { :root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; --input-bg: #333; --input-border: #555; --chart-bg: #2a2a2a; --chart-grid: #444444; --chart-line-grid: #333333; --chart-border: #555555; } }");
+    chunk += F("body { background-color: var(--bg-color); color: var(--text-secondary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem 0;}");
+    chunk += F(".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; width: 500px; max-width: 95%; height: 80vh; position: relative; display: flex; flex-direction: column; } ");
+    chunk += F("@media (max-width: 768px) { .container { width: 95%; height: 80vh; padding: 1rem; } .prev, .next { top: auto; bottom: 5px; transform: translateY(0); } .prev { left: 10px; } .next { right: 10px; } }");
+    chunk += F("h1, h2 { color: var(--text-primary); margin-bottom: 1rem; text-align: center; } p { color: var(--text-secondary); font-size: 1.1rem; margin: 0.5rem 0; } strong { color: var(--text-primary); } hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }");
+    chunk += F(".carousel-container { position: relative; flex-grow: 1; overflow: hidden; } .carousel-slide { display: none; height: 100%; width: 100%; flex-basis: 100%; flex-shrink: 0; overflow-y: auto; padding-right: 15px; box-sizing: border-box; word-wrap: break-word; }");
+    chunk += F(".fade { animation-name: fade; animation-duration: 0.5s; } @keyframes fade { from {opacity: .4} to {opacity: 1} }");
+    chunk += F(".prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; z-index: 10; } .prev { left: -50px; } .next { right: -50px; } .prev:hover, .next:hover { background-color: rgba(0,0,0,0.2); border-radius: 50%; }");
+    chunk += F(".dots { text-align: center; padding-top: 20px; } .dot { cursor: pointer; height: 15px; width: 15px; margin: 0 2px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; } .active, .dot:hover { background-color: var(--dot-active-color); }");
+    chunk += F(".emoji-container { text-align: center; margin-top: 15px; margin-bottom: 15px; } .emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }");
+    chunk += F(".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; border: none;} .button:hover { background-color: #45a049; } .button[disabled] { background-color: #555; color: #eee; border: 1px solid #eeeeee; cursor: not-allowed; }");
+    chunk += F(".center-button { text-align: center; } input[type=text] { width: 100%; padding: 12px 20px; margin: 8px 0; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: 4px; background-color: var(--input-bg); color: var(--text-primary); }");
+    chunk += F("</style></head><body><div class='container'>");
+    chunk += F("<a class='prev' onclick='changeSlide(-1)'>&#10094;</a><a class='next' onclick='changeSlide(1)'>&#10095;</a><div class='carousel-container'>");
+    server.sendContent(chunk);
 
-    // --- Slide 2: Redes WiFi Cercanas ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Redes WiFi Cercanas</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>📡</span></div><br>";
-    page += "<p><strong>Escaneado:</strong> " + lastWifiScanTime + "</p>";
-    page += wifiNetworksList;
-    page += "</div>";
+    chunk = F("<div class='carousel-slide fade'><h2>Estado - ") + String(settings.description) + F("</h2><div class='emoji-container'><span class='emoji'>📟</span></div><br>");
+    chunk += F("<h3><strong>📅 Fecha:</strong> ") + getFormattedDate() + F("<br>");
+    chunk += F("<strong>⌚ Hora:</strong> <span id='current-time'>") + getFormattedTime() + F("</span><br>");
+    chunk += F("<strong>🖥️ Hostname:</strong> ") + id_Wemos + F("<br>");
+    chunk += F("<strong>🏠 IP Privada:</strong> ") + localIP + F("<br>");
+    chunk += F("<strong>↔️ M&aacute;scara de Red:</strong> ") + WiFi.subnetMask().toString() + F("<br>");
+    chunk += F("<strong>🚪 Puerta de Enlace:</strong> ") + WiFi.gatewayIP().toString() + F("<br>");
+    chunk += F("<strong>🌐 IP P&uacute;blica:</strong> ") + publicIP + F("<br>");
+    chunk += F("<strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> ") + String(WiFi.RSSI()) + F(" dBm<br>");
+    chunk += F("<strong>🆔 Direcci&oacute;n MAC:</strong> ") + WiFi.macAddress() + F("<br>");
+    chunk += F("<strong>💡 ID del Chip (HEX):</strong> ") + String(ESP.getChipId(), HEX) + F("<br>");
+    chunk += F("<strong>💾 Memoria Flash:</strong> ") + String(ESP.getFlashChipSize() / 1024) + F(" KB<br>");
+    chunk += F("<strong>🧠 Memoria Libre (Heap):</strong> ") + String(ESP.getFreeHeap() / 1024.0, 2) + F(" KB<br>");
+    chunk += F("<strong>⚡ Tiempo de Actividad:</strong> ") + uptime + F("</h3></div>");
+    server.sendContent(chunk);
 
-    // --- Slide 3: Prueba de Velocidad ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Prueba de Velocidad</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>🚀</span></div><br>";
-    page += "<p><strong>&Uacute;ltima prueba:</strong> " + lastSpeedTestTime + "</p>";
-    page += "<p><strong>Velocidad de Descarga:</strong> " + downloadSpeed + "</p>";
-    page += "<div class='center-button'>";
-    page += "<a href='/speedtest' id='speedtest-button' class='button' onclick='showWaiting(\"speedtest-button\", \"waiting-message\")'>&#x1F680; Iniciar Prueba</a>";
-    page += "</div>";
-    page += "<p id='waiting-message' style='display:none; text-align:center;'>Por favor, espere mientras se realiza la prueba...</p>";
-    page += "</div>";
+    chunk = F("<div class='carousel-slide fade'><h2>Redes WiFi Cercanas</h2><div class='emoji-container'><span class='emoji'>📡</span></div><br><p><strong>Escaneado:</strong> ") + lastWifiScanTime + F("</p>") + wifiNetworksList + F("</div>");
+    server.sendContent(chunk);
 
-    // --- Slide 4: Monitor de Latencia ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Monitor de Latencia</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>⏱️</span></div><br>";
-    page += "<p><strong>&Uacute;ltimo chequeo:</strong> " + lastPingTimeStr + "</p>";
-    page += latencyData;
-    page += "<p><i>Ping a " + String(settings.pingTarget) + "</i></p>";
-    page += "</div>";
+    chunk = F("<div class='carousel-slide fade'><h2>Prueba de Velocidad</h2><div class='emoji-container'><span class='emoji'>🚀</span></div><br><p><strong>&Uacute;ltima prueba:</strong> ") + lastSpeedTestTime + F("</p><p><strong>Velocidad de Descarga:</strong> ") + downloadSpeed + F("</p><div class='center-button'><a href='/speedtest' id='speedtest-button' class='button' onclick='showWaiting(\"speedtest-button\", \"waiting-message\")'>&#x1F680; Iniciar Prueba</a></div><p id='waiting-message' style='display:none; text-align:center;'>Por favor, espere mientras se realiza la prueba...</p></div>");
+    server.sendContent(chunk);
 
-    // --- Slide 5: Histórico RSSI ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Señal WiFi (1h)</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>📉</span></div><br>";
-    page += "<p><strong>Actual:</strong> " + String(WiFi.RSSI()) + " dBm</p>";
-    page += "<div style='background:white; padding:10px; border-radius:5px; border:1px solid #ccc;'>" + rssiGraphSvg + "</div>";
-    page += "<div style='display:flex; justify-content:space-between; font-size:0.8em; margin-top:5px;'><span>-30dBm</span><span>-100dBm</span></div>";
-    page += "</div>";
+    chunk = F("<div class='carousel-slide fade'><h2>Monitor de Latencia</h2><div class='emoji-container'><span class='emoji'>⏱️</span></div><br><p><strong>&Uacute;ltimo chequeo:</strong> ") + lastPingTimeStr + F("</p>") + latencyData + F("<p><i>Ping a ") + String(settings.pingTarget) + F("</i></p></div>");
+    server.sendContent(chunk);
 
-    // --- Slide 6: Escáner LAN ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Esc&aacute;ner LAN</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>🕸️</span></div><br>";
-    page += "<p>Busca dispositivos en tu red utilizando <strong>Ping (ICMP)</strong>.</p>";
-    page += "<p><strong>&Uacute;ltimo escaneo:</strong> " + lastLanScanTime + "</p>";
-    page += "<div class='center-button'>";
-    page += "<a href='/scanlan' id='scanlan-button' class='button' onclick='showWaiting(\"scanlan-button\", \"waiting-lan\")'>&#x1F50E; Escanear Red</a>";
-    page += "</div>";
-    page += "<p id='waiting-lan' style='display:none; text-align:center;'>Escaneando... Esto puede tardar varios segundos.</p>";
-    page += "<div style='margin-top:15px;'>" + lanScanData + "</div>";
-    page += "</div>";
+    chunk = F("<div class='carousel-slide fade'><h2>Señal WiFi (1h)</h2><div class='emoji-container'><span class='emoji'>📉</span></div><br><p><strong>Actual:</strong> ") + String(WiFi.RSSI()) + F(" dBm</p><div style='background: var(--chart-bg); padding: 10px; border-radius: 5px; border: 1px solid var(--chart-border);'>") + rssiGraphSvg + F("</div><div style='display:flex; justify-content:space-between; font-size:0.8em; margin-top:5px;'><span>-30dBm</span><span>-100dBm</span></div></div>");
+    server.sendContent(chunk);
 
-    // --- Slide 7: Configuración ---
-    page += "<div class='carousel-slide fade'>";
-    page += "<h2>Configuraci&oacute;n</h2>";
-    page += "<div class='emoji-container'><span class='emoji'>⚙️</span></div><br>";
-    page += "<form action='/save' method='POST'>";
-    page += "<p><strong>Descripci&oacute;n del Dispositivo:</strong><br>";
-    page += "<input type='text' name='desc' value='" + String(settings.description) + "' maxlength='50' placeholder='Ej: Casa'></p>";
-    page += "<p><strong>Dominio IP P&uacute;blica:</strong><br>";
-    page += "<input type='text' name='domain' value='" + String(settings.domain) + "' maxlength='50' placeholder='Ej: ifconfig.me'></p>";
-    page += "<p><strong>Host Ping Latencia:</strong><br>";
-    page += "<input type='text' name='pingIP' value='" + String(settings.pingTarget) + "' maxlength='50' placeholder='Ej: 8.8.8.8'></p>";
-    page += "<div class='center-button'>";
-    page += "<button type='submit' class='button'>💾 Guardar Cambios</button>";
-    page += "</div>";
-    page += "</form>";
-    page += "</div>";
+    chunk = F("<div class='carousel-slide fade'><h2>Esc&aacute;ner LAN</h2><div class='emoji-container'><span class='emoji'>🕸️</span></div><br><p>Busca dispositivos en tu red utilizando <strong>Ping (ICMP)</strong>.</p><p><strong>&Uacute;ltimo escaneo:</strong> ") + lastLanScanTime + F("</p><div class='center-button'><a href='/scanlan' id='scanlan-button' class='button' onclick='showWaiting(\"scanlan-button\", \"waiting-lan\")'>&#x1F50E; Escanear Red</a></div><p id='waiting-lan' style='display:none; text-align:center;'>Escaneando... Esto puede tardar varios segundos.</p><div style='margin-top:15px;'>") + lanScanData + F("</div></div>");
+    server.sendContent(chunk);
 
-    page += "</div>"; // end carousel-container
+    chunk = F("<div class='carousel-slide fade'><h2>Configuraci&oacute;n</h2><div class='emoji-container'><span class='emoji'>⚙️</span></div><br><form action='/save' method='POST'><p><strong>Descripci&oacute;n del Dispositivo:</strong><br><input type='text' name='desc' value='") + String(settings.description) + F("' maxlength='50' placeholder='Ej: Casa'></p><p><strong>Dominio IP P&uacute;blica:</strong><br><input type='text' name='domain' value='") + String(settings.domain) + F("' maxlength='50' placeholder='Ej: ifconfig.me'></p><p><strong>Host Ping Latencia:</strong><br><input type='text' name='pingIP' value='") + String(settings.pingTarget) + F("' maxlength='50' placeholder='Ej: 8.8.8.8'></p><div class='center-button'><button type='submit' class='button'>💾 Guardar Cambios</button></div></form></div>");
+    server.sendContent(chunk);
 
-    // --- Dots ---
-    page += "<div class='dots'>";
-    page += "<span class='dot' onclick='currentSlide(1)'></span>";
-    page += "<span class='dot' onclick='currentSlide(2)'></span>";
-    page += "<span class='dot' onclick='currentSlide(3)'></span>";
-    page += "<span class='dot' onclick='currentSlide(4)'></span>";
-    page += "<span class='dot' onclick='currentSlide(5)'></span>";
-    page += "<span class='dot' onclick='currentSlide(6)'></span>";
-    page += "<span class='dot' onclick='currentSlide(7)'></span>";
-    page += "</div>";
-
-    page += "</div>"; // end container
-
-    // --- JavaScript ---
-    page += "<script>";
-    page += "let slideIndex = 1;";
-    page += "showSlide(slideIndex);";
-    page += "function changeSlide(n) { showSlide(slideIndex += n); }";
-    page += "function currentSlide(n) { showSlide(slideIndex = n); }";
-    page += "function showWaiting(btnId, msgId) {";
-    page += "  document.getElementById(btnId).setAttribute('disabled', 'true');";
-    page += "  document.getElementById(btnId).innerHTML = '⏳ Trabajando...';";
-    page += "  document.getElementById(msgId).style.display = 'block';";
-    page += "}";
-    page += "function showSlide(n) {";
-    page += "let i; let slides = document.getElementsByClassName('carousel-slide');";
-    page += "let dots = document.getElementsByClassName('dot');";
-    page += "if (n > slides.length) { slideIndex = 1; }";
-    page += "if (n < 1) { slideIndex = slides.length; }";
-    page += "for (i = 0; i < slides.length; i++) { slides[i].style.display = 'none'; }";
-    page += "for (i = 0; i < dots.length; i++) { dots[i].className = dots[i].className.replace(' active', ''); }";
-    page += "slides[slideIndex - 1].style.display = 'block';";
-    page += "dots[slideIndex - 1].className += ' active';";
-    page += "}";
-    page += "setInterval(function() { changeSlide(1); }, 30000);"; // Auto-rotate every 30 seconds
-    page += "function updateTime() { fetch('/time').then(response => response.text()).then(data => { if (data) document.getElementById('current-time').innerText = data; }); } setInterval(updateTime, 900000);";
-    page += "</script>";
-    
-    page += "</body></html>";
-
-    server.send(200, "text/html", page);
+    chunk = F("</div><div class='dots'><span class='dot' onclick='currentSlide(1)'></span><span class='dot' onclick='currentSlide(2)'></span><span class='dot' onclick='currentSlide(3)'></span><span class='dot' onclick='currentSlide(4)'></span><span class='dot' onclick='currentSlide(5)'></span><span class='dot' onclick='currentSlide(6)'></span><span class='dot' onclick='currentSlide(7)'></span></div></div>");
+    chunk += F("<script>let slideIndex=1;showSlide(slideIndex);function changeSlide(n){showSlide(slideIndex+=n)}function currentSlide(n){showSlide(slideIndex=n)}function showWaiting(b,m){document.getElementById(b).setAttribute('disabled','true');document.getElementById(b).innerHTML='⏳ Trabajando...';document.getElementById(m).style.display='block'}function showSlide(n){let i;let s=document.getElementsByClassName('carousel-slide');let d=document.getElementsByClassName('dot');if(n>s.length){slideIndex=1}if(n<1){slideIndex=s.length}for(i=0;i<s.length;i++){s[i].style.display='none'}for(i=0;i<d.length;i++){d[i].className=d[i].className.replace(' active','')}s[slideIndex-1].style.display='block';d[slideIndex-1].className+=' active'}function updateTime(){fetch('/time').then(r=>r.text()).then(d=>{if(d)document.getElementById('current-time').innerText=d})}setInterval(updateTime,900000);</script></body></html>");
+    server.sendContent(chunk);
 }
 
 // --- Setup y Loop ---
 void setup() {
-    delay(1500);
     Serial.begin(115200);
 
     // Cargar configuración persistente
@@ -657,12 +534,12 @@ void setup() {
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
     // Serial.print("Sincronizando hora...");
     time_t now = time(nullptr);
-    while (now < 8 * 3600 * 2) {
-      delay(500);
-      // Serial.print(".");
+    unsigned long startNtp = millis();
+    while (now < 8 * 3600 * 2 && (millis() - startNtp < 10000)) { // Timeout de 10s
       now = time(nullptr);
+      delay(100); // Pequeña pausa para estabilidad
     }
-    // Serial.println("\n¡Hora sincronizada!");
+    // Serial.println("\n¡Hora sincronizada (o timeout)!");
     
     // Inicializar Array RSSI con el valor actual para no empezar en cero
     int currentRssi = WiFi.RSSI();
