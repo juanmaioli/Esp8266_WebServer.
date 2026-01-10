@@ -1,4 +1,4 @@
-// CavaWiFi Version 2.2
+// CEsp8266_WebServer Version 2.4.1
 // Author Juan Maioli
 // Cambios: Ping cada 45s y Host de Latencia Configurable.
 #include <ESP8266WiFi.h>
@@ -30,7 +30,7 @@ struct WifiNetwork {
 };
 
 // --- Variables Globales ---
-const char* firmwareVersion = "2.3";
+const char* firmwareVersion = "2.4.1";
 const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
