@@ -48,7 +48,13 @@ Guarda tus preferencias en la memoria EEPROM (no se borran al reiniciar):
     *   `ESP8266WiFi`
     *   `ESP8266WebServer`
     *   `WiFiManager` (por tzapu)
-*   *Nota:* La librería de Ping ya está incluida en la carpeta del proyecto (`ESP8266Ping.h/cpp`), no es necesario instalarla aparte.
+    *   `ArduinoOTA`
+*   *Nota:* La librería de Ping ya está incluida en la carpeta del proyecto (`ESP8266Ping.h/cpp`).
+
+### 🔧 Compilación (Importante para OTA)
+Para asegurar suficiente espacio para las actualizaciones OTA, selecciona el siguiente esquema de partición en Arduino IDE:
+*   **Placa:** NodeMCU 1.0 (ESP-12E Module)
+*   **Flash Size:** 4MB (FS:1MB OTA:~1019KB)
 
 ## 🚀 Instalación
 
