@@ -9,6 +9,7 @@
 #include <time.h>
 #include <EEPROM.h>           // Para guardar configuración
 #include "ESP8266Ping.h"      // Librería Local de Ping
+#include <ArduinoOTA.h>       // Para actualizaciones OTA
 
 // --- Estructura de Configuración ---
 struct ConfigSettings {
@@ -541,6 +542,42 @@ void setup() {
       delay(100); // Pequeña pausa para estabilidad
     }
     // Serial.println("\n¡Hora sincronizada (o timeout)!");
+
+    // --- Configuración OTA ---
+    ArduinoOTA.setHostname(id_Wemos.c_str());
+    // ArduinoOTA.setPassword("admin"); // Opcional: Descomentar para seguridad
+
+    ArduinoOTA.onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH) {
+        type = "sketch";
+      } else { // U_FS
+        type = "filesystem";
+      }
+      // Desmontar sistema de archivos si es necesario
+      // SPIFFS.end();
+      Serial.println("Iniciando actualización OTA: " + type);
+    });
+
+    ArduinoOTA.onEnd([]() {
+      Serial.println("\nFin de la actualización.");
+    });
+
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progreso: %u%%\r", (progress / (total / 100)));
+    });
+
+    ArduinoOTA.onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Fallo de Autenticación");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Fallo al Iniciar");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Fallo de Conexión");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Fallo de Recepción");
+      else if (error == OTA_END_ERROR) Serial.println("Fallo al Finalizar");
+    });
+
+    ArduinoOTA.begin();
+    Serial.println("OTA Listo");
     
     // Inicializar Array RSSI con el valor actual para no empezar en cero
     int currentRssi = WiFi.RSSI();
@@ -569,6 +606,8 @@ void setup() {
 }
 
 void loop() {
+    ArduinoOTA.handle(); // Manejar actualizaciones OTA
+
     unsigned long currentMillis = millis();
     // Tarea 1: Imprimir la hora en el Serial cada minuto
     if (currentMillis - previousTimeUpdate >= timeInterval) {
