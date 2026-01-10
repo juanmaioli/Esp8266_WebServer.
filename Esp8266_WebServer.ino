@@ -1,4 +1,4 @@
-// CEsp8266_WebServer Version 2.4.1
+// CEsp8266_WebServer Version 2.5.0
 // Author Juan Maioli
 // Cambios: Ping cada 45s y Host de Latencia Configurable.
 #include <ESP8266WiFi.h>
@@ -30,7 +30,7 @@ struct WifiNetwork {
 };
 
 // --- Variables Globales ---
-const char* firmwareVersion = "2.4.1";
+const char* firmwareVersion = "2.5.0";
 const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
@@ -356,6 +356,13 @@ void handleSpeedTest() {
   server.send(302, "text/plain", "");
 }
 
+void handleWifiScan() {
+  wifiNetworksList = scanWifiNetworks();
+  lastWifiScanTime = getFormattedTime();
+  server.sendHeader("Location", String("/"), true);
+  server.send(302, "text/plain", "");
+}
+
 void handleLanScan() {
   IPAddress local = WiFi.localIP();
   String result = "";
@@ -498,7 +505,7 @@ void handleRoot() {
     chunk += F("<strong>⚡ Tiempo de Actividad:</strong> ") + uptime + F("</h3></div>");
     server.sendContent(chunk);
 
-    chunk = F("<div class='carousel-slide fade'><h2>Redes WiFi Cercanas</h2><div class='emoji-container'><span class='emoji'>📡</span></div><br><p><strong>Escaneado:</strong> ") + lastWifiScanTime + F("</p>") + wifiNetworksList + F("</div>");
+    chunk = F("<div class='carousel-slide fade'><h2>Redes WiFi Cercanas</h2><div class='emoji-container'><span class='emoji'>📡</span></div><br><p><strong>Escaneado:</strong> ") + lastWifiScanTime + F("</p><div class='center-button'><a href='/scanwifi' id='scanwifi-button' class='button' onclick='showWaiting(\"scanwifi-button\", \"waiting-wifi\")'>🔄 Escanear Ahora</a></div><p id='waiting-wifi' style='display:none; text-align:center;'>Escaneando redes...</p>") + wifiNetworksList + F("</div>");
     server.sendContent(chunk);
 
     chunk = F("<div class='carousel-slide fade'><h2>Prueba de Velocidad</h2><div class='emoji-container'><span class='emoji'>🚀</span></div><br><p><strong>&Uacute;ltima prueba:</strong> ") + lastSpeedTestTime + F("</p><p><strong>Velocidad de Descarga:</strong> ") + downloadSpeed + F("</p><div class='center-button'><a href='/speedtest' id='speedtest-button' class='button' onclick='showWaiting(\"speedtest-button\", \"waiting-message\")'>&#x1F680; Iniciar Prueba</a></div><p id='waiting-message' style='display:none; text-align:center;'>Por favor, espere mientras se realiza la prueba...</p></div>");
@@ -606,6 +613,7 @@ void setup() {
 
     server.on("/", handleRoot);
     server.on("/speedtest", handleSpeedTest);
+    server.on("/scanwifi", handleWifiScan); // Endpoint para escáner WiFi manual
     server.on("/scanlan", handleLanScan); // Endpoint para escáner LAN
     server.on("/time", handleTimeRequest);
     server.on("/save", HTTP_POST, handleSaveConfig); // Nuevo endpoint para guardar config
