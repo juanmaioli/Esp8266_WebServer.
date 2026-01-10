@@ -16,6 +16,7 @@ struct ConfigSettings {
   char description[51]; // Max 50 chars + null terminator
   char domain[51];      // Max 50 chars + null terminator
   char pingTarget[51];  // Max 50 chars + null terminator (NUEVO)
+  char otaPassword[51]; // Max 50 chars + null terminator (NUEVO OTA)
   uint8_t magic;        // Byte para verificar versión de config
 };
 
@@ -89,12 +90,13 @@ void saveSettings() {
 void loadSettings() {
   EEPROM.begin(512);
   EEPROM.get(0, settings);
-  // Verificar si es la primera vez o si cambió la estructura (Magic 0x43)
-  if (settings.magic != 0x43) {
+  // Verificar si es la primera vez o si cambió la estructura (Magic 0x44)
+  if (settings.magic != 0x44) {
     strncpy(settings.description, "Casa", 50);
     strncpy(settings.domain, "ifconfig.me", 50);
     strncpy(settings.pingTarget, "8.8.8.8", 50); // Default Google DNS
-    settings.magic = 0x43; // Marcar como inicializado v2.2
+    strncpy(settings.otaPassword, "ArduinoOTA", 50); // Default OTA Password
+    settings.magic = 0x44; // Marcar como inicializado v2.3
     saveSettings();
   }
 }
@@ -425,6 +427,15 @@ void handleSaveConfig() {
     }
   }
 
+  if (server.hasArg("otaPwd")) {
+    String op = server.arg("otaPwd");
+    op.trim();
+    if (op.length() > 0) {
+      strncpy(settings.otaPassword, op.c_str(), 50);
+      settings.otaPassword[50] = '\0';
+    }
+  }
+
   saveSettings();
   server.sendHeader("Location", String("/"), true);
   server.send(302, "text/plain", "");
@@ -502,7 +513,7 @@ void handleRoot() {
     chunk = F("<div class='carousel-slide fade'><h2>Esc&aacute;ner LAN</h2><div class='emoji-container'><span class='emoji'>🕸️</span></div><br><p>Busca dispositivos en tu red utilizando <strong>Ping (ICMP)</strong>.</p><p><strong>&Uacute;ltimo escaneo:</strong> ") + lastLanScanTime + F("</p><div class='center-button'><a href='/scanlan' id='scanlan-button' class='button' onclick='showWaiting(\"scanlan-button\", \"waiting-lan\")'>&#x1F50E; Escanear Red</a></div><p id='waiting-lan' style='display:none; text-align:center;'>Escaneando... Esto puede tardar varios segundos.</p><div style='margin-top:15px;'>") + lanScanData + F("</div></div>");
     server.sendContent(chunk);
 
-    chunk = F("<div class='carousel-slide fade'><h2>Configuraci&oacute;n</h2><div class='emoji-container'><span class='emoji'>⚙️</span></div><br><form action='/save' method='POST'><div style='display:flex; gap:10px;'><div style='flex:1;'><p><strong>Descripci&oacute;n del Dispositivo:</strong><br><input type='text' name='desc' value='") + String(settings.description) + F("' maxlength='50' placeholder='Ej: Casa'></p></div><div style='flex:1;'><p><strong>Dominio IP P&uacute;blica:</strong><br><input type='text' name='domain' value='") + String(settings.domain) + F("' maxlength='50' placeholder='Ej: ifconfig.me'></p></div></div><p><strong>Host Ping Latencia:</strong><br><input type='text' name='pingIP' value='") + String(settings.pingTarget) + F("' maxlength='50' placeholder='Ej: 8.8.8.8'></p><div class='center-button'><button type='submit' class='button'>💾 Guardar Cambios</button></div></form></div>");
+    chunk = F("<div class='carousel-slide fade'><h2>Configuraci&oacute;n</h2><div class='emoji-container'><span class='emoji'>⚙️</span></div><br><form action='/save' method='POST'><div style='display:flex; gap:10px;'><div style='flex:1;'><p><strong>Descripci&oacute;n del Dispositivo:</strong><br><input type='text' name='desc' value='") + String(settings.description) + F("' maxlength='50' placeholder='Ej: Casa'></p></div><div style='flex:1;'><p><strong>Dominio IP P&uacute;blica:</strong><br><input type='text' name='domain' value='") + String(settings.domain) + F("' maxlength='50' placeholder='Ej: ifconfig.me'></p></div></div><p><strong>Host Ping Latencia:</strong><br><input type='text' name='pingIP' value='") + String(settings.pingTarget) + F("' maxlength='50' placeholder='Ej: 8.8.8.8'></p><p><strong>Contrase&ntilde;a OTA:</strong><br><input type='text' name='otaPwd' value='") + String(settings.otaPassword) + F("' maxlength='50' placeholder='Ej: ArduinoOTA'></p><div class='center-button'><button type='submit' class='button'>💾 Guardar Cambios</button></div></form></div>");
     server.sendContent(chunk);
 
     chunk = F("</div><div class='dots'><span class='dot' onclick='currentSlide(1)'></span><span class='dot' onclick='currentSlide(2)'></span><span class='dot' onclick='currentSlide(3)'></span><span class='dot' onclick='currentSlide(4)'></span><span class='dot' onclick='currentSlide(5)'></span><span class='dot' onclick='currentSlide(6)'></span><span class='dot' onclick='currentSlide(7)'></span></div></div>");
@@ -545,7 +556,7 @@ void setup() {
 
     // --- Configuración OTA ---
     ArduinoOTA.setHostname(id_Wemos.c_str());
-    // ArduinoOTA.setPassword("admin"); // Opcional: Descomentar para seguridad
+    ArduinoOTA.setPassword(settings.otaPassword); 
 
     ArduinoOTA.onStart([]() {
       String type;
