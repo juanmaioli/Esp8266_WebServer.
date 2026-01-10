@@ -1,4 +1,4 @@
-# 📟 Monitor de Infraestructura y Red con ESP8266 (v2.5.2)
+# 📟 Monitor de Infraestructura y Red con ESP8266 (v2.5.3)
 
 Este proyecto transforma un microcontrolador ESP8266 en una navaja suiza para el diagnóstico de redes. A través de un servidor web autónomo y optimizado, permite monitorear la salud de tu conexión a internet, la estabilidad del WiFi y descubrir dispositivos en tu red local.
 
@@ -67,6 +67,7 @@ Para asegurar suficiente espacio para las actualizaciones OTA, selecciona el sig
 
 ## 🛠️ Historial de Versiones
 
+*   **v2.5.3:** Optimización de diseño en la slide de Configuración (campos alineados en filas).
 *   **v2.5.2:** Reubicación de flechas de navegación a la parte inferior (junto a los puntos).
 *   **v2.5.1:** Visualización de máscara de red en formato CIDR (ej. /24).
 *   **v2.5.0:** Agregado botón para escaneo manual de redes WiFi.
