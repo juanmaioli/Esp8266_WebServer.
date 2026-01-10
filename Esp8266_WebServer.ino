@@ -476,7 +476,6 @@ void handleRoot() {
     chunk += F("<strong>⌚ Hora:</strong> <span id='current-time'>") + getFormattedTime() + F("</span><br>");
     chunk += F("<strong>🖥️ Hostname:</strong> ") + id_Wemos + F("<br>");
     chunk += F("<strong>🏠 IP Privada:</strong> ") + localIP + F("<br>");
-    chunk += F("<strong>↔️ M&aacute;scara de Red:</strong> ") + WiFi.subnetMask().toString() + F("<br>");
     chunk += F("<strong>🚪 Puerta de Enlace:</strong> ") + WiFi.gatewayIP().toString() + F("<br>");
     chunk += F("<strong>🌐 IP P&uacute;blica:</strong> ") + publicIP + F("<br>");
     chunk += F("<strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> ") + String(WiFi.RSSI()) + F(" dBm<br>");
