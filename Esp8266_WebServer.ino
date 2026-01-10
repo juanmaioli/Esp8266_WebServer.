@@ -1,4 +1,4 @@
-// CEsp8266_WebServer Version 2.5.1
+// CEsp8266_WebServer Version 2.5.2
 // Author Juan Maioli
 // Cambios: Ping cada 45s y Host de Latencia Configurable.
 #include <ESP8266WiFi.h>
@@ -30,7 +30,7 @@ struct WifiNetwork {
 };
 
 // --- Variables Globales ---
-const char* firmwareVersion = "2.5.1";
+const char* firmwareVersion = "2.5.2";
 const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
@@ -481,17 +481,17 @@ void handleRoot() {
     chunk += F("@media (prefers-color-scheme: dark) { :root { --bg-color: #121212; --container-bg: #1e1e1e; --text-primary: #e0e0e0; --text-secondary: #b0b3b8; --pre-bg: #2a2a2a; --hr-color: #3e4042; --dot-color: #555; --dot-active-color: #ccc; --input-bg: #333; --input-border: #555; --chart-bg: #2a2a2a; --chart-grid: #444444; --chart-line-grid: #333333; --chart-border: #555555; } }");
     chunk += F("body { background-color: var(--bg-color); color: var(--text-secondary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem 0;}");
     chunk += F(".container { background-color: var(--container-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; width: 500px; max-width: 95%; height: 80vh; position: relative; display: flex; flex-direction: column; } ");
-    chunk += F("@media (max-width: 768px) { .container { width: 95%; height: 80vh; padding: 1rem; } .prev, .next { top: auto; bottom: 5px; transform: translateY(0); } .prev { left: 10px; } .next { right: 10px; } }");
+    chunk += F("@media (max-width: 768px) { .container { width: 95%; height: 80vh; padding: 1rem; } }");
     chunk += F("h1, h2 { color: var(--text-primary); margin-bottom: 1rem; text-align: center; } p { color: var(--text-secondary); font-size: 1.1rem; margin: 0.5rem 0; } strong { color: var(--text-primary); } hr { border: 0; height: 1px; background-color: var(--hr-color); margin: 1.5rem 0; }");
     chunk += F(".carousel-container { position: relative; flex-grow: 1; overflow: hidden; } .carousel-slide { display: none; height: 100%; width: 100%; flex-basis: 100%; flex-shrink: 0; overflow-y: auto; padding-right: 15px; box-sizing: border-box; word-wrap: break-word; }");
     chunk += F(".fade { animation-name: fade; animation-duration: 0.5s; } @keyframes fade { from {opacity: .4} to {opacity: 1} }");
-    chunk += F(".prev, .next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: auto; padding: 16px; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; z-index: 10; } .prev { left: -50px; } .next { right: -50px; } .prev:hover, .next:hover { background-color: rgba(0,0,0,0.2); border-radius: 50%; }");
-    chunk += F(".dots { text-align: center; padding-top: 20px; } .dot { cursor: pointer; height: 15px; width: 15px; margin: 0 2px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; } .active, .dot:hover { background-color: var(--dot-active-color); }");
+    chunk += F(".prev, .next { cursor: pointer; color: var(--text-primary); font-weight: bold; font-size: 24px; transition: 0.3s; user-select: none; padding: 0 15px; vertical-align: middle; } .prev:hover, .next:hover { color: var(--dot-active-color); }");
+    chunk += F(".dots { text-align: center; padding-top: 20px; display: flex; justify-content: center; align-items: center; } .dot { cursor: pointer; height: 15px; width: 15px; margin: 0 5px; background-color: var(--dot-color); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; } .active, .dot:hover { background-color: var(--dot-active-color); }");
     chunk += F(".emoji-container { text-align: center; margin-top: 15px; margin-bottom: 15px; } .emoji { font-size: 4em; line-height: 1; display: inline-block; vertical-align: middle; }");
     chunk += F(".button { background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 5px; border: none;} .button:hover { background-color: #45a049; } .button[disabled] { background-color: #555; color: #eee; border: 1px solid #eeeeee; cursor: not-allowed; }");
     chunk += F(".center-button { text-align: center; } input[type=text] { width: 100%; padding: 12px 20px; margin: 8px 0; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: 4px; background-color: var(--input-bg); color: var(--text-primary); }");
     chunk += F("</style></head><body><div class='container'>");
-    chunk += F("<a class='prev' onclick='changeSlide(-1)'>&#10094;</a><a class='next' onclick='changeSlide(1)'>&#10095;</a><div class='carousel-container'>");
+    chunk += F("<div class='carousel-container'>");
     server.sendContent(chunk);
 
     chunk = F("<div class='carousel-slide fade'><h2>Estado - ") + String(settings.description) + F("</h2><div class='emoji-container'><span class='emoji'>📟</span></div><br>");
@@ -528,7 +528,7 @@ void handleRoot() {
     chunk = F("<div class='carousel-slide fade'><h2>Configuraci&oacute;n</h2><div class='emoji-container'><span class='emoji'>⚙️</span></div><br><form action='/save' method='POST'><div style='display:flex; gap:10px;'><div style='flex:1;'><p><strong>Descripci&oacute;n del Dispositivo:</strong><br><input type='text' name='desc' value='") + String(settings.description) + F("' maxlength='50' placeholder='Ej: Casa'></p></div><div style='flex:1;'><p><strong>Dominio IP P&uacute;blica:</strong><br><input type='text' name='domain' value='") + String(settings.domain) + F("' maxlength='50' placeholder='Ej: ifconfig.me'></p></div></div><p><strong>Host Ping Latencia:</strong><br><input type='text' name='pingIP' value='") + String(settings.pingTarget) + F("' maxlength='50' placeholder='Ej: 8.8.8.8'></p><p><strong>Contrase&ntilde;a OTA:</strong><br><input type='text' name='otaPwd' value='") + String(settings.otaPassword) + F("' maxlength='50' placeholder='Ej: ArduinoOTA'></p><div class='center-button'><button type='submit' class='button'>💾 Guardar Cambios</button></div></form></div>");
     server.sendContent(chunk);
 
-    chunk = F("</div><div class='dots'><span class='dot' onclick='currentSlide(1)'></span><span class='dot' onclick='currentSlide(2)'></span><span class='dot' onclick='currentSlide(3)'></span><span class='dot' onclick='currentSlide(4)'></span><span class='dot' onclick='currentSlide(5)'></span><span class='dot' onclick='currentSlide(6)'></span><span class='dot' onclick='currentSlide(7)'></span></div></div>");
+    chunk = F("</div><div class='dots'><a class='prev' onclick='changeSlide(-1)'>&#10094;</a><span class='dot' onclick='currentSlide(1)'></span><span class='dot' onclick='currentSlide(2)'></span><span class='dot' onclick='currentSlide(3)'></span><span class='dot' onclick='currentSlide(4)'></span><span class='dot' onclick='currentSlide(5)'></span><span class='dot' onclick='currentSlide(6)'></span><span class='dot' onclick='currentSlide(7)'></span><a class='next' onclick='changeSlide(1)'>&#10095;</a></div></div>");
     chunk += F("<script>let slideIndex=1;showSlide(slideIndex);function changeSlide(n){showSlide(slideIndex+=n)}function currentSlide(n){showSlide(slideIndex=n)}function showWaiting(b,m){document.getElementById(b).setAttribute('disabled','true');document.getElementById(b).innerHTML='⏳ Trabajando...';document.getElementById(m).style.display='block'}function showSlide(n){let i;let s=document.getElementsByClassName('carousel-slide');let d=document.getElementsByClassName('dot');if(n>s.length){slideIndex=1}if(n<1){slideIndex=s.length}for(i=0;i<s.length;i++){s[i].style.display='none'}for(i=0;i<d.length;i++){d[i].className=d[i].className.replace(' active','')}s[slideIndex-1].style.display='block';d[slideIndex-1].className+=' active'}function updateTime(){fetch('/time').then(r=>r.text()).then(d=>{if(d)document.getElementById('current-time').innerText=d})}setInterval(updateTime,900000);</script></body></html>");
     server.sendContent(chunk);
 }
