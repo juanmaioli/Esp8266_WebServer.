@@ -1,4 +1,4 @@
-# 📟 Monitor de Infraestructura y Red con ESP8266 (v2.3)
+# 📟 Monitor de Infraestructura y Red con ESP8266 (v2.5.1)
 
 Este proyecto transforma un microcontrolador ESP8266 en una navaja suiza para el diagnóstico de redes. A través de un servidor web autónomo y optimizado, permite monitorear la salud de tu conexión a internet, la estabilidad del WiFi y descubrir dispositivos en tu red local.
 
@@ -6,7 +6,7 @@ Este proyecto transforma un microcontrolador ESP8266 en una navaja suiza para el
 
 ### 1. 📊 Dashboard en Tiempo Real
 Interfaz web responsiva con carrusel manual y soporte nativo para modo oscuro.
-*   **Estado General:** Uptime, IPs (Privada/Pública), Memoria Libre, Info del Chip.
+*   **Estado General:** Uptime, IPs (Privada/Pública), Memoria Libre, Info del Chip, Versión de Firmware.
 *   **Optimización de Memoria:** Utiliza *Chunked Transfer Encoding* para servir la interfaz sin saturar la RAM del ESP8266.
 *   **Favicon Dinámico:** SVG incrustado (📟).
 
@@ -22,20 +22,21 @@ Visualiza la calidad de tu conexión WiFi en la última hora.
 *   **Diseño Adaptativo:** Se escala correctamente al ancho del dispositivo y respeta el tema oscuro/claro del sistema.
 *   Código de colores semaforizado según la intensidad (dBm).
 
-### 4. 🕸️ Escáner LAN (ICMP)
-Descubre qué dispositivos están conectados a tu red.
-*   Escanea todo el segmento de red `/24` (IPs .1 a .254).
-*   Utiliza Ping (ICMP) optimizado (50ms timeout) para una detección rápida.
-*   **Nota:** Incluye librería `ESP8266Ping` localmente modificada para mayor velocidad.
+### 4. 🕸️ Escáneres de Red
+*   **Escáner LAN (ICMP):** Descubre dispositivos en tu red `/24` (IPs .1 a .254) usando Ping optimizado.
+*   **Escáner WiFi:** Visualiza redes inalámbricas cercanas, su potencia y tipo de encriptación. Incluye botón de escaneo manual.
 
 ### 5. 🚀 Prueba de Velocidad
 *   Mide el ancho de banda de descarga real descargando un archivo de prueba.
 
-### 6. ⚙️ Configuración Persistente
-Guarda tus preferencias en la memoria EEPROM (no se borran al reiniciar):
-*   **Nombre/Descripción:** (Ej. "Oficina", "Casa").
-*   **Dominio IP Pública:** Servicio para obtener la IP WAN (Ej. `ifconfig.me`).
-*   **Host de Latencia:** IP o Dominio al cual hacer Ping (Ej. `1.1.1.1` o `google.com`).
+### 6. ⚙️ Configuración Avanzada
+Guarda tus preferencias en la memoria EEPROM:
+*   **General:** Nombre del dispositivo, Dominio para obtener IP Pública.
+*   **Red:** Host objetivo para medir latencia.
+*   **OTA:** Contraseña configurable para actualizaciones inalámbricas.
+
+### 7. 📲 Actualizaciones OTA
+*   Soporte para cargar nuevo firmware de forma inalámbrica mediante ArduinoOTA.
 
 ## 📋 Requisitos
 
@@ -60,12 +61,15 @@ Para asegurar suficiente espacio para las actualizaciones OTA, selecciona el sig
 
 1.  Clona este repositorio o descarga los archivos.
 2.  Abre `Esp8266_WebServer.ino` en Arduino IDE.
-3.  Sube el código a tu placa.
+3.  Sube el código a tu placa (la primera vez por cable USB para ajustar la partición).
 4.  **Primera vez:** Conéctate a la red WiFi `Esp8266-XXXX` y configura tu WiFi local desde el Portal Cautivo.
 5.  Accede al navegador usando la IP asignada (puerto 3000). Ej: `http://192.168.1.50:3000`.
 
 ## 🛠️ Historial de Versiones
 
+*   **v2.5.1:** Visualización de máscara de red en formato CIDR (ej. /24).
+*   **v2.5.0:** Agregado botón para escaneo manual de redes WiFi.
+*   **v2.4.x:** Soporte para actualizaciones OTA, configuración de contraseña OTA vía web, visualización de versión de firmware en dashboard y mejoras de diseño en formulario.
 *   **v2.3:** Optimización crítica de memoria (Chunked response), corrección visual del gráfico WiFi (tamaño y tema oscuro), eliminación de retardos bloqueantes en arranque y cambio de carrusel a manual.
 *   **v2.2:** Host de latencia configurable, Ping cada 45s.
 *   **v2.1:** Eliminado módulo de Clima. Limpieza de código.
