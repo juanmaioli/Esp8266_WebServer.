@@ -28,6 +28,7 @@ struct WifiNetwork {
 };
 
 // --- Variables Globales ---
+const char* firmwareVersion = "2.3";
 const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
@@ -470,7 +471,8 @@ void handleRoot() {
     server.sendContent(chunk);
 
     chunk = F("<div class='carousel-slide fade'><h2>Estado - ") + String(settings.description) + F("</h2><div class='emoji-container'><span class='emoji'>📟</span></div><br>");
-    chunk += F("<h3><strong>📅 Fecha:</strong> ") + getFormattedDate() + F("<br>");
+    chunk += F("<h3><strong>🏷️ Versi&oacute;n:</strong> ") + String(firmwareVersion) + F("<br>");
+    chunk += F("<strong>📅 Fecha:</strong> ") + getFormattedDate() + F("<br>");
     chunk += F("<strong>⌚ Hora:</strong> <span id='current-time'>") + getFormattedTime() + F("</span><br>");
     chunk += F("<strong>🖥️ Hostname:</strong> ") + id_Wemos + F("<br>");
     chunk += F("<strong>🏠 IP Privada:</strong> ") + localIP + F("<br>");
