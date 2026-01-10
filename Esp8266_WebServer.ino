@@ -1,4 +1,4 @@
-// CEsp8266_WebServer Version 2.5.0
+// CEsp8266_WebServer Version 2.5.1
 // Author Juan Maioli
 // Cambios: Ping cada 45s y Host de Latencia Configurable.
 #include <ESP8266WiFi.h>
@@ -30,7 +30,7 @@ struct WifiNetwork {
 };
 
 // --- Variables Globales ---
-const char* firmwareVersion = "2.5.0";
+const char* firmwareVersion = "2.5.1";
 const char* hostname_prefix = "Esp8266-";
 String serial_number;
 String id_Wemos;
@@ -464,6 +464,11 @@ void handleRoot() {
     uptime += String(seconds) + "s";
     if (uptime == "") uptime = "0s"; // In case millis() is very small
 
+    // Calcular CIDR
+    int cidr = 0;
+    IPAddress subnet = WiFi.subnetMask();
+    for (int i = 0; i < 4; i++) cidr += __builtin_popcount(subnet[i]);
+
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.send(200, "text/html", "");
 
@@ -494,7 +499,7 @@ void handleRoot() {
     chunk += F("<strong>📅 Fecha:</strong> ") + getFormattedDate() + F("<br>");
     chunk += F("<strong>⌚ Hora:</strong> <span id='current-time'>") + getFormattedTime() + F("</span><br>");
     chunk += F("<strong>🖥️ Hostname:</strong> ") + id_Wemos + F("<br>");
-    chunk += F("<strong>🏠 IP Privada:</strong> ") + localIP + F("<br>");
+    chunk += F("<strong>🏠 IP Privada:</strong> ") + localIP + "/" + String(cidr) + F("<br>");
     chunk += F("<strong>🚪 Puerta de Enlace:</strong> ") + WiFi.gatewayIP().toString() + F("<br>");
     chunk += F("<strong>🌐 IP P&uacute;blica:</strong> ") + publicIP + F("<br>");
     chunk += F("<strong>📶 Intensidad de Se&ntilde;al (RSSI):</strong> ") + String(WiFi.RSSI()) + F(" dBm<br>");
